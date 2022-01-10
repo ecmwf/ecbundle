@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+
+# (C) Copyright 2020- ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+
+"""
+Script to build an already created bundle using companion script
+    ecbuild-create
+"""
+
+import os
+import sys
+from subprocess import CalledProcessError, check_call
+
+sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.realpath(__file__))+'/..'))
+from ecbundle import Bundle, BundleBuilder, Timer, cpu_count, fullpath
+from ecbundle.logging import DEBUG, colors, logger
+
+
+def get_src_dir():
+    src_dir = "source"
+    for i, arg in enumerate(sys.argv):
+        if arg.startswith("--src-dir="):
+            src_dir = arg.split("=")[1]
+        elif arg.startswith("--src-dir"):
+            src_dir = sys.argv[i + 1]
+    src_dir = fullpath(src_dir)
+    return src_dir
+
+
+def get_options():
+    bundle = Bundle(get_src_dir() + '/bundle.yml')
+    return bundle.options()
+
+
+def get_projects():
+    bundle = Bundle(get_src_dir() + '/bundle.yml')
+    return bundle.projects()
+
+
+def main():
+
+    # Parse arguments
+    from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
+    parser = ArgumentParser(description=__doc__,
+                            formatter_class=RawTextHelpFormatter)
+
+    # --------------------------------------------------------------------------
+    # Parse common subcommands
+    # --------------------------------------------------------------------------
+    parser.add_argument('--dryrun', '--dry-run',
+                        help='Review actions without executing them',
+                        action='store_true')
+    parser.add_argument('--no-colour', '--no-color',
+                        help='Disable color output',
+                        action='store_true')
+
+    parser.add_argument('--verbose', '-v',
+                        help='Verbose output',
+                        action='store_true')
+
+    # --------------------------------------------------------------------------
+    # Parse commands for build
+    # --------------------------------------------------------------------------
+
+    parser.add_argument('--arch',
+                        help='Path to directory containing architecture info')
+    parser.add_argument('--list-archs',
+                        help='Path to directory containing architecture info',
+                        action='store_true')
+
+    parser.add_argument('--src-dir',
+                        help='Directory containing bundle sources')
+    parser.add_argument('--build-dir',
+                        help='Directory where package will be built')
+    parser.add_argument('--install-dir',
+                        help='Directory where package will be installed')
+
+    parser.add_argument('--target', action='append',
+                        help='Target to build. Can be used repeatedly. If no targets are named '
+                        'the default behaviour of the selected build tool will be invoked.')
+
+    default_build_type = 'BIT'
+    parser.add_argument('--build-type', default=default_build_type,
+                        help='specify CMake build type (defaults to ' + default_build_type + ')')
+
+    parser.add_argument('--ninja', action='store_true',
+                        help='Use ninja instead of make')
+
+    class CaseInsensitive(list):
+        # list subclass that uses upper() when testing for input
+        def __contains__(self, other):
+            return super(CaseInsensitive, self).__contains__(other.upper())
+
+    parser.add_argument('--log', choices=CaseInsensitive(['OFF', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL']),
+                        help='set log level for CMake configuration')
+    parser.add_argument('-j', '--threads', type=int, default=cpu_count(),
+                        help='number of concurrent build threads (defaults to %d)' % cpu_count())
+    parser.add_argument('--cache',
+                        help="Location of ecbuild cache file (ecbuild-cache.cmake) to speed up initial configuration")
+
+    parser.add_argument('-k', '--keep-going', action='store_true',
+                        help="Try to compile as much as possible after errors")
+    parser.add_argument('-r', '--retry', action='store_true',
+                        help="When a build fails, try to compile once more, in order to see errors better. "
+                             "In combination with '--keep-going', only failed units will recompile.")
+    parser.add_argument('--retry-verbose', action='store_true',
+                        help="Same as \"--retry\" but with verbosity during retry ON.")
+    parser.add_argument('--clean', action='store_true')
+    parser.add_argument('--install', action='store_true')
+    parser.add_argument('--reconfigure', action='store_true')
+    parser.add_argument('--without-tests',
+                        help='Disable tests from compilation',
+                        action='store_true')
+
+    try:
+        typemap = {'str': str, 'int': int}
+        options = get_options()
+        for opt in options:
+            arg_opts = {}
+            if opt.type():
+                if opt.type() in typemap:
+                    arg_opts['type'] = typemap[opt.type()]
+            else:
+                arg_opts['action'] = 'store_true'
+            parser.add_argument('--' + opt.name(), help=opt.help(), **arg_opts)
+
+    except IOError:
+        pass
+
+    parser.add_argument('--cmake', help=SUPPRESS)
+
+    try:
+        projects = get_projects()
+        for project in projects:
+            parser.add_argument('--' + project.name() + '.cmake', help=SUPPRESS)
+    except IOError:
+        pass
+
+    # --------------------------------------------------------------------------
+
+    # Close parser and populate variable args
+    args = parser.parse_args()
+
+    # Explicitly disable coloured logs
+    if args.no_colour:
+        colors.disable()
+
+    # Log everything, including commands executed
+    if args.verbose:
+        logger.setLevel(DEBUG)
+
+    build = BundleBuilder(**vars(args))
+
+    if args.list_archs:
+        build.list_archs()
+        quit()
+
+    build.build()
+
+if __name__ == '__main__':
+    sys.exit(main())

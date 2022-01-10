@@ -1,0 +1,18 @@
+---
+### Bundle
+
+name    : test_bundle
+cmake   : TEST_BUNDLE_VAR_1=1
+
+projects :
+
+    - ecbuild : 
+        git     : https://github.com/ecmwf/ecbuild
+        version : master
+        bundle  : false
+
+    - test_project_1 :
+        git     : https://git.ecmwf.int/scm/ecsdk/test_project_1
+        version : master
+        cmake   : TEST_PROJECT_1_VAR_1=2
+ 

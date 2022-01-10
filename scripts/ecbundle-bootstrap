@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+
+# (C) Copyright 2020- ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+# This script should be sourced to install ecbundle in a Python virtualenv.
+#
+#   . ./ecbundle-bootstrap [-p python-binary] [-d venv-directory]
+#                          [-e ecbundle-source] [-b ecbundle-branch]
+#
+
+
+# Detect if this file is sourced
+([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] || 
+ [[ -n $KSH_VERSION && $(cd "$(dirname -- "$0")" &&
+    printf '%s' "${PWD%/}/")$(basename -- "$0") != "${.sh.file}" ]] || 
+ [[ -n $BASH_VERSION ]] && (return 0 2>/dev/null)) && _SOURCED=true || _SOURCED=false
+
+
+if $_SOURCED && [[ $SHELL =~ zsh ]]; then
+  _FILENAME=$(basename ${(%):-%x})
+else
+  _FILENAME=$(basename ${BASH_SOURCE[0]})
+fi
+
+_USAGE_HELP="Usage: ${_FILENAME} [OPTIONS]
+
+Options:
+  -p, --python PATH          Python binary to use for virtualenv install
+  -d, --env-dir PATH         Path of the virtualenv to create (default: ecbundle_env)
+  -e, --ecbundle PATH        Path to ecbundle source repository
+  -b, --branch NAME          Name of the ecbundle branch to install
+  -f, --force                Force a clean re-install of the virtualenv
+  --proxy                    Proxy to use for pip installs
+  --https                    Use https to perform initial ecbundle install
+  -h, --help                 Show this message and exit.
+"
+
+_pyenv_path="ecbundle_venv"   # Default python environment name
+_pyenv_bin="python3"          # Default python interpreter for the venv
+_pyenv_force=false            # By default don't force the venv installation
+_pyenv_requirements=false     # By default don't install requirements
+_pyenv_proxy=false            # By default don't use a proxy
+
+# Default location and branch for ecbundle source retrieval 
+_ecbundle_source=false        # Default will be set once know if we use https or ssh
+_ecbundle_branch=false
+_ecbundle_bin=ecbundle-create # Command to check if ecbundle is already installed
+_ecbundle_https=false         # By default use ssh for git checkout
+
+_PARAMS=""
+while test $# -gt 0; do
+    case "$1" in
+    -p|--python)
+        _pyenv_bin=$2
+        shift 2 ;;
+    -d|--env-dir)
+        _pyenv_path=$2
+        shift 2 ;;
+    -e|--ecbundle)
+        _ecbundle_source="$( cd $2 && pwd -P )"
+        shift 2 ;;
+    -b|--branch)
+        _ecbundle_branch=$2
+        shift 2 ;;
+    -f|--force)
+        _pyenv_force=true
+        shift 1 ;;
+    -r|--requirements)
+        _pyenv_requirements=$2
+        shift 2 ;;
+    --proxy)
+        _pyenv_proxy=$2
+        shift 2 ;;
+    --https)
+        _ecbundle_https=true
+        shift 1 ;;
+    -h|--help)
+        echo "${_USAGE_HELP}" >&2
+        exit 0
+        shift 1 ;;
+    --) # end argument parsing
+        shift
+        break
+        ;;
+    -*|--*=) # unsupported flags
+    echo "Error: Unsupported flag $1" >&2
+    echo "${__USAGE_HELP}" >&2
+    exit 1
+    ;;
+    *) # preserve positional arguments
+        _PARAMS="$_PARAMS $1"
+        shift
+        ;;
+    esac
+done
+
+# set positional arguments in their proper place
+eval set -- "$_PARAMS"
+
+command_exists () { type "$1" &> /dev/null ; }
+
+if ! command_exists ${_pyenv_bin} ; then
+    echo "ERROR: Python command \"${_pyenv_bin}\" not found!"
+    exit 1
+else
+    if [[ ${_ecbundle_source} == false ]] ; then
+        # Set default checkout locations
+        if [[ ${_ecbundle_https} == true ]] ; then
+            _ecbundle_source="git+https://github.com/ecmwf/ecbundle.git"
+        else
+            _ecbundle_source="git+ssh://git@github.com/ecmwf/ecbundle.git"
+        fi
+    fi
+
+    if [[ ! -d ${_ecbundle_source}/.git && ${_ecbundle_branch} == false ]] ; then
+        # This if-statement can disappear once develop is merged into master
+        _ecbundle_branch="develop"
+    fi
+
+    if [[ ${_pyenv_proxy} != false ]] ; then
+        _pip_cmd="python -m pip install --proxy ${_pyenv_proxy}"
+    else
+        _pip_cmd="python -m pip install"
+    fi
+
+    if [[ -d "$_pyenv_path" && ${_pyenv_force} == true ]]; then
+        # Remove existing virtualenv to trigger re-install
+        echo "[ecbundle] Removing virtualenv in ${_pyenv_path}"
+        rm -rf ${_pyenv_path}
+    fi
+
+    if [ ! -d "$_pyenv_path" ]; then
+        # Create a new virtualenv from a given python binary
+        echo "[ecbundle] Creating ${_pyenv_bin} virtualenv in ${_pyenv_path}"
+        eval ${_pyenv_bin} -m venv ${_pyenv_path}
+    fi
+
+    # Activate virtualenv
+    echo "[ecbundle] Activating Python virtualenv in ${_pyenv_path}"
+    source ${_pyenv_path}/bin/activate
+
+    if ! command_exists ${_ecbundle_bin} || ${_pyenv_force} ; then
+
+        if [[ ${_ecbundle_branch} != false ]] ; then
+            _ecbundle_branch="@${_ecbundle_branch}"
+        else
+            _ecbundle_branch=""
+        fi
+
+        # Pip install ecbundle
+        eval ${_pip_cmd} pip==21.2.4  # Downgrade to pip 21.2.4 due to https://issueexplorer.com/issue/pypa/pip/10652
+
+        if [ -d "${_ecbundle_source}/.git" ]; then
+            echo "[ecbundle] Installing ecbundle from local git repository ${_ecbundle_source}${_ecbundle_branch}"
+            eval ${_pip_cmd} "git+file://${_ecbundle_source}${_ecbundle_branch}"
+        else
+            echo "[ecbundle] Installing ecbundle from ${_ecbundle_source}${_ecbundle_branch}"
+            eval ${_pip_cmd} "${_ecbundle_source}${_ecbundle_branch}"
+        fi
+
+        if [[ ${_pyenv_requirements} != false ]] ; then
+            # Pip install from requirements file
+            echo "[ecbundle] Populating virtualenv from ${_pyenv_requirements}"
+            eval ${_pip_cmd} -r ${_pyenv_requirements}
+        fi
+    fi
+fi
+
+unset _pyenv_path _pyenv_bin _ecbundle_source _ecbundle_branch _ecbundle_bin
+unset _pyenv_force _pyenv_requirements _pyenv_proxy _ecbundle_https _pip_cmd _PARAMS _USAGE_HELP _SOURCED

@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+
+"""
+Script to build an already created bundle using companion script
+    ecbuild-create
+"""
+
+import os
+import sys
+from subprocess import CalledProcessError, check_call
+
+sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.realpath(__file__))+'/..'))
+from ecbundle import Bundle, fullpath
+from ecbundle.git import *
+from ecbundle.logging import DEBUG, colors, logger
+
+
+def get_src_dir():
+    src_dir = "source"
+    for i, arg in enumerate(sys.argv):
+        if arg.startswith("--src-dir="):
+            src_dir = arg.split("=")[1]
+        elif arg.startswith("--src-dir"):
+            src_dir = sys.argv[i + 1]
+    src_dir = fullpath(src_dir)
+    return src_dir
+
+
+def get_options():
+    bundle = Bundle(get_src_dir() + '/bundle.yml')
+    return bundle.options()
+
+def get_projects():
+    bundle = Bundle(get_src_dir() + '/bundle.yml')
+    return bundle.projects()
+
+
+def main():
+
+    colors.enable()
+
+    # Parse arguments
+    from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
+    parser = ArgumentParser(description=__doc__,
+                            formatter_class=RawTextHelpFormatter)
+
+    parser.add_argument('--no-colour', '--no-color',
+                        help='Disable color output',
+                        action='store_true')
+
+    parser.add_argument('--src-dir',
+                        help='Directory containing bundle sources',default='source')
+
+    parser.add_argument('file', nargs='*',help='output file')
+
+    args = parser.parse_args()
+    # --------------------------------------------------------------------------
+
+    if args.no_colour:
+        colors.disable()
+
+    src_dir = fullpath(args.src_dir)
+
+    bundle = Bundle( src_dir+'/bundle.yml' )
+
+    filepath = bundle.name()+'-env.sh'
+    if args.file :
+        filepath = args.file[0]
+
+    with open(filepath,'w') as out:
+        for project in bundle.projects():
+            if( project.git() ):
+
+                project_dir = os.path.join(src_dir, project.name())
+                sha1 = Git.commit_id(project_dir,False)
+
+                BUNDLE = bundle.name().replace('-', '_').upper()
+                p = project
+                pname = p.name()
+                PNAME = pname.replace('-', '_').upper()
+                NAME = BUNDLE + '_' + PNAME
+                VERSION = NAME + '_VERSION'
+
+                print("export "+VERSION+"="+sha1)
+                out.write("export "+VERSION+"="+sha1+"\n")
+
+
+if __name__ == '__main__':
+    sys.exit(main())

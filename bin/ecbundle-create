@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+
+# (C) Copyright 2020- ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+"""
+Script to generate a CMake bundle from bundle file
+"""
+
+import os
+import sys
+from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
+
+sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.realpath(__file__))+'/..'))
+from ecbundle import BundleCreator, BundleDownloader, Timer
+from ecbundle.logging import DEBUG, colors, error, logger, success
+
+
+def main():
+
+    # Parse arguments
+    parser = ArgumentParser(description=__doc__,
+                            formatter_class=RawTextHelpFormatter)
+
+    # --------------------------------------------------------------------------
+    # Parse common subcommands
+    # --------------------------------------------------------------------------
+    parser.add_argument('--no-colour', '--no-color',
+                        help='Disable color output',
+                        action='store_true')
+
+    parser.add_argument('--verbose', '-v',
+                        help='Verbose output',
+                        action='store_true')
+
+    parser.add_argument('--dryrun',
+                        help='Review actions without executing them',
+                        action='store_true')
+    parser.add_argument('--dry-run',
+                        help=SUPPRESS,
+                        action='store_true')
+
+    parser.add_argument('--bundle',
+                        help='Configuration of bundle', default=os.getcwd())
+
+    parser.add_argument('--src-dir',
+                        help='Directory containing repositories', default='source')
+
+    parser.add_argument('--update',
+                        help='Update local checkout with remote changes',
+                        action='store_true')
+
+    parser.add_argument('--forced-update',
+                        help='Overwrite local checkout with remote changes if needed',
+                        action='store_true')
+
+    parser.add_argument('-j', '--threads', type=int, default=1,
+                        help='number of concurrent download threads (defaults to 1). '
+                        + 'Choosing --threads=0 (or -j0) will use a maximum guess')
+
+    parser.add_argument('--shallow',
+                        help='download shallow git repositories (no history)',
+                        action='store_true')
+
+    # --------------------------------------------------------------------------
+
+    # Close parser and populate variable args
+    args = parser.parse_args()
+
+    # Explicitly disable coloured logs
+    if args.no_colour:
+        colors.disable()
+
+    # Log everything, including commands executed
+    if args.verbose:
+        logger.setLevel(DEBUG)
+
+    download_timer = Timer()
+
+    errcode = 0
+    if BundleDownloader(**vars(args)).download() != 0:
+        errcode = 1 # error
+
+    success("\nTime elapsed for downloading: %s\n" % download_timer.elapsed_str())
+
+    if BundleCreator(**vars(args)).create() != 0:
+        errcode = 1 # error
+
+    if errcode == 1:
+        error("\n!!! Errors occured !!!")
+
+    return errcode
+
+if __name__ == '__main__':
+    sys.exit(main())

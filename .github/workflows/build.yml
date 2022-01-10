@@ -1,0 +1,64 @@
+
+name: build 
+
+on:
+  # Trigger the workflow on all pushes, except on tag creation
+  push:
+    branches:
+    - '**'
+    tags-ignore:
+    - '**'
+
+  # Trigger the workflow on all pull requests
+  pull_request: ~
+
+  # Allow workflow to be dispatched on demand
+  workflow_dispatch: ~
+
+env:
+  PYTHON_VERSION: 3.9
+
+jobs:
+
+  quality:
+    name: Code QA
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: pip install black flake8 isort
+    - run: black --version
+    - run: isort --check .
+    - run: black --check .
+    - run: flake8 .
+
+  tests:
+    name: Unit tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    needs: quality
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - run: pip install .
+    - run: pip install -r tests/requirements.txt
+    - name: Print environment
+      run: |
+        pip freeze
+        env | sort
+    - name: Run tests
+      run: pytest
+    - name: Generate Coverage
+      run: |
+        pip install pytest-cov
+        python -m pytest --cov=./ --cov-report=xml
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v2
+      with:
+        fail_ci_if_error: true
+        verbose : true

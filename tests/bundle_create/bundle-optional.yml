@@ -1,0 +1,15 @@
+---
+### Bundle
+
+name    : test-bundle-optional
+
+projects :
+    - project1 :
+        git     : ${BITBUCKET}/user/project1
+        version : 0.0.1
+        bundle  : true
+    - project2 :
+        git     : ${BITBUCKET}/user/project2
+        version : 0.0.2
+        bundle  : true
+        optional: true

@@ -1,0 +1,25 @@
+---
+### Bundle
+
+name    : test-bundle-submodules
+
+projects :
+    - project1 :
+        git         : ${BITBUCKET}/user/project1
+        remote      : ec-user
+        submodules  : true
+        version     : 0.0.1
+        bundle      : false
+
+    - project2 :
+        git     : ${BITBUCKET}/user/project2
+        remote  : ec-user
+        version : 0.0.2
+        bundle  : false
+
+    - project3 :
+        git         : ${BITBUCKET}/user/project3
+        remote      : ec-user
+        submodules  : true
+        version     : develop
+        bundle      : false

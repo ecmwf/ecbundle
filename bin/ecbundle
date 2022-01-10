@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Wraps ecbundle-build or ecbundle-create,
+
+set -e
+
+usage()
+{
+    echo "Usage: "
+    echo "       ecbundle --version"
+    echo "       ecbundle create [--help]"
+    echo "       ecbundle build  [--help]"
+}
+
+
+# Check at least one argument was provided:
+if [[ $# -eq 0 ]]; then
+  echo "ERROR: At least one argument expected: '--version', 'build' or 'create'"
+  usage
+  exit 1
+fi
+
+SCRIPT_DIR="$( cd $( dirname "${BASH_SOURCE[0]}" ) && pwd -P )"
+
+
+# Which script do we run?
+# Partial matches are accepted, e.g. "$0 cr"
+if [[ "--version" == "$1"* ]]; then
+  ${SCRIPT_DIR}/ecbundle-version
+elif [[ "build" == "$1"* ]]; then
+  shift
+  ${SCRIPT_DIR}/ecbundle-build "$@"
+elif [[ "create" == "$1"* ]]; then
+  shift
+  ${SCRIPT_DIR}/ecbundle-create "$@"
+else
+  echo "ERROR: Expected 'build' or 'create' as first argument"
+  usage
+  exit 1
+fi
