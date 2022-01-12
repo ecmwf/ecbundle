@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Script to build an already created bundle using companion script
-    ecbuild-create
+Script to extract and store git versions of projects in a bundle
 """
 
 import os
