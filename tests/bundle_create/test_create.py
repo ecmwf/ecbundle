@@ -143,7 +143,7 @@ def test_create_optional_success(here, cleanup):
     assert (
         "ecbundle_add_project( project2 )" in (src_dir / "CMakeLists.txt").read_text()
     )
-    
+
 
 def test_create_existing_symlink(here, cleanup, watcher):
     """
@@ -168,7 +168,7 @@ def test_create_existing_symlink(here, cleanup, watcher):
     if src_dir.exists():
         shutil.rmtree(src_dir)
     src_dir.mkdir()
-    
+
     # Create a symlink to a fake path in source
     (src_dir / "project1").symlink_to("../non-existent-fake-path")
 
