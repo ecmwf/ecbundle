@@ -208,7 +208,7 @@ class BundleCreator(object):
                     msg += " (symbolic link to [" + project.dir() + "])"
                 else:
                     msg += " (symbolic link to ["
-                    msg += os.path.realpath(self.src_dir() + "/" + project.name())
+                    msg += os.readlink(self.src_dir() + "/" + project.name())
                     msg += "])"
             elif project.version():
                 msg += " (" + project.version() + ")"
