@@ -161,12 +161,15 @@ def cpu_count():
 
     if "SLURM_JOB_ID" in os.environ:
         slurm_job_id = os.environ["SLURM_JOB_ID"]
-        threads_per_task = execute(f"squeue -j {slurm_job_id} -o %J -h", capture_output=True, silent=True)
-        if threads_per_task.strip() == '*':
-            threads_per_task = 1
-        else:
-            threads_per_task = int(threads_per_task)
-        tasks_per_node = int(execute(f"squeue -j {slurm_job_id} -o %c -h", capture_output=True, silent=True))
+        try:
+            threads_per_task = execute(f"squeue -j {slurm_job_id} -o %J -h", capture_output=True, silent=True)
+            tasks_per_node = int(execute(f"squeue -j {slurm_job_id} -o %c -h", capture_output=True, silent=True))
+        except CalledProcessError:
+            # Silently ignore if call to squeue fails
+            pass
+
+        if isinstance(threads_per_task, str):
+            threads_per_task = 1 if threads_per_task.trip() == '*' else int(threads_per_task)
 
     if "EC_threads_per_task" in os.environ.keys():
         threads_per_task = int(os.environ["EC_threads_per_task"])
