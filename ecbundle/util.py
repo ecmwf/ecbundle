@@ -161,15 +161,37 @@ def cpu_count():
 
     if "SLURM_JOB_ID" in os.environ:
         slurm_job_id = os.environ["SLURM_JOB_ID"]
-        try:
-            threads_per_task = execute(f"squeue -j {slurm_job_id} -o %J -h", capture_output=True, silent=True)
-            tasks_per_node = int(execute(f"squeue -j {slurm_job_id} -o %c -h", capture_output=True, silent=True))
-        except CalledProcessError:
-            # Silently ignore if call to squeue fails
-            pass
 
-        if isinstance(threads_per_task, str):
-            threads_per_task = 1 if threads_per_task.trip() == '*' else int(threads_per_task)
+        if "SLURM_TASKS_PER_NODE" in os.environ:
+            # Value is given as part of the environment, including a multiplier `(xN)` with number of nodes `N` for
+            # multi-node jobs
+            tasks_per_node = os.environ["SLURM_TASKS_PER_NODE"]
+            if '(' in tasks_per_node:
+                tasks_per_node = tasks_per_node[:tasks_per_node.index('(')]
+            tasks_per_node = int(tasks_per_node)
+
+        else:
+            try:
+                ntpernode = int(execute(f"squeue -j {slurm_job_id} -O ntpernode -h", capture_output=True, silent=True))
+            except CalledProcessError:
+                # Silently ignore if call to squeue fails
+                ntpernode = 0
+
+            if ntpernode > 0:
+                # This reports `0` if not specified --ntasks-per-node explicitly.
+                # Luckily, in such cases, the ENV information is typically up-to-date with sane defaults and we
+                # should not even end up here.
+                tasks_per_node = ntpernode
+
+        if "SLURM_CPUS_PER_TASK" in os.environ:
+            # This is only available if it has been specified explicitly at submission
+            threads_per_task = int(os.environ["SLURM_CPUS_PER_TASK"])
+        else:
+            try:
+                threads_per_task = int(execute(f"squeue -j {slurm_job_id} -O cpus-per-task -h", capture_output=True, silent=True))
+            except CalledProcessError:
+                # Silently ignore if call to squeue fails
+                threads_per_task = 1
 
     if "EC_threads_per_task" in os.environ.keys():
         threads_per_task = int(os.environ["EC_threads_per_task"])
