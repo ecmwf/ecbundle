@@ -166,13 +166,19 @@ def cpu_count():
             # Value is given as part of the environment, including a multiplier `(xN)` with number of nodes `N` for
             # multi-node jobs
             tasks_per_node = os.environ["SLURM_TASKS_PER_NODE"]
-            if '(' in tasks_per_node:
-                tasks_per_node = tasks_per_node[:tasks_per_node.index('(')]
+            if "(" in tasks_per_node:
+                tasks_per_node = tasks_per_node[: tasks_per_node.index("(")]
             tasks_per_node = int(tasks_per_node)
 
         else:
             try:
-                ntpernode = int(execute(f"squeue -j {slurm_job_id} -O ntpernode -h", capture_output=True, silent=True))
+                ntpernode = int(
+                    execute(
+                        f"squeue -j {slurm_job_id} -O ntpernode -h",
+                        capture_output=True,
+                        silent=True,
+                    )
+                )
             except CalledProcessError:
                 # Silently ignore if call to squeue fails
                 ntpernode = 0
@@ -188,7 +194,13 @@ def cpu_count():
             threads_per_task = int(os.environ["SLURM_CPUS_PER_TASK"])
         else:
             try:
-                threads_per_task = int(execute(f"squeue -j {slurm_job_id} -O cpus-per-task -h", capture_output=True, silent=True))
+                threads_per_task = int(
+                    execute(
+                        f"squeue -j {slurm_job_id} -O cpus-per-task -h",
+                        capture_output=True,
+                        silent=True,
+                    )
+                )
             except CalledProcessError:
                 # Silently ignore if call to squeue fails
                 threads_per_task = 1
