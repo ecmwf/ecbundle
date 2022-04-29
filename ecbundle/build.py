@@ -225,7 +225,7 @@ fi
 
 exec 1> >(tee -a "$LOG_FILE") 2>&1
 
-source env.sh
+source ./env.sh
 
 set +x
 echo
@@ -274,7 +274,7 @@ fi
 exec 1> >(tee -a "$LOG_FILE") 2>&1
 
 ### Environment
-source env.sh
+source ./env.sh
 
 set +x
 echo
