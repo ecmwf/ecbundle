@@ -11,8 +11,14 @@ import shutil
 from pathlib import Path
 
 import pytest
+from conftest import Watcher
 
-from ecbundle import BundleCreator
+from ecbundle import BundleCreator, logger
+
+
+@pytest.fixture
+def watcher():
+    return Watcher(logger=logger)
 
 
 @pytest.fixture
@@ -137,3 +143,39 @@ def test_create_optional_success(here, cleanup):
     assert (
         "ecbundle_add_project( project2 )" in (src_dir / "CMakeLists.txt").read_text()
     )
+
+
+def test_create_existing_symlink(here, cleanup, watcher):
+    """
+    Test creation of the agglomerated bundle in ``./source`` with a
+    symlink already present.
+    """
+    src_dir = here / "source"
+    args = {
+        "no_colour": True,
+        "verbose": False,
+        "dryrun": True,
+        "dry_run": True,
+        "bundle": "%s" % here,
+        "src_dir": "%s" % src_dir,
+        "update": False,
+        "forced_update": False,
+        "threads": 1,
+        "shallow": False,
+    }
+
+    # Clean directory
+    if src_dir.exists():
+        shutil.rmtree(src_dir)
+    src_dir.mkdir()
+
+    # Create a symlink to a fake path in source
+    (src_dir / "project1").symlink_to("../non-existent-fake-path")
+
+    with watcher:
+        BundleCreator(**args).create()
+
+    assert (src_dir / "CMakeLists.txt").exists()
+    assert (src_dir / "bundle.yml").exists()
+    assert "- project1" in watcher.output
+    assert "[../non-existent-fake-path]" in watcher.output

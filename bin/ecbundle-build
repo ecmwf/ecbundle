@@ -10,8 +10,7 @@
 
 
 """
-Script to build an already created bundle using companion script
-    ecbuild-create
+Script to build an already created bundle with 'ecbundle-create' companion script
 """
 
 import os

@@ -204,7 +204,12 @@ class BundleCreator(object):
                 continue
             msg = "    - " + project.name()
             if os.path.islink(self.src_dir() + "/" + project.name()):
-                msg += " (symbolic link to [" + project.dir() + "])"
+                if project.dir():
+                    msg += " (symbolic link to [" + project.dir() + "])"
+                else:
+                    msg += " (symbolic link to ["
+                    msg += os.readlink(self.src_dir() + "/" + project.name())
+                    msg += "])"
             elif project.version():
                 msg += " (" + project.version() + ")"
             print(msg)
