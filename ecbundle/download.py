@@ -129,7 +129,6 @@ class BundleDownloader(object):
         return None
 
     def download(self):
-
         dryrun = self.dryrun()
 
         downloaded_packages = list()
@@ -170,9 +169,7 @@ class BundleDownloader(object):
             src_dir = path.join(download_dir, pkg.name)
             try:
                 if path.exists(src_dir):
-
                     if self.update():
-
                         header(
                             "Checkout project %s @ %s"
                             % (GitURL.parse(pkg.url), pkg.version)
@@ -364,7 +361,7 @@ class BundleDownloader(object):
 
         if len(downloaded_packages) and not dryrun:
             header("\nFollowing projects are checked out in " + self.src_dir() + ":")
-            for (url, version, sha1) in downloaded_packages:
+            for url, version, sha1 in downloaded_packages:
                 print("    - " + url + " (" + version + ")  [" + sha1 + "]")
 
         if len(symlink_projects):

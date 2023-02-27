@@ -23,7 +23,6 @@ class Git(object):
 
     @classmethod
     def clone(cls, repo_url, src_dir, rev, origin, dryrun, shallow=False):
-
         retry = False
 
         if shallow:

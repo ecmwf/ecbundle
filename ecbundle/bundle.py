@@ -178,7 +178,6 @@ class BundleCreator(object):
         bundle_yml_file = src_dir + "/bundle.yml"
 
         if self.bundle_needs_updating():
-
             symlink_force(bundle.file(), bundle_yml_file)
             symlink_force(os.path.dirname(bundle.file()) + "/arch", src_dir + "/arch")
 
@@ -241,7 +240,6 @@ class BundleCreator(object):
         return True
 
     def create_cmakelists_from_bundle(self, name="CMakeLists.txt"):
-
         bundle = self.bundle()
         ecbuild_in_bundle = False
         for project in bundle.projects():
