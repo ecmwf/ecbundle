@@ -106,6 +106,9 @@ class BundleDownloader(object):
     def src_dir(self):
         return fullpath(self.get("src_dir", "source"))
 
+    def github_token(self):
+        return self.get("github_token")
+
     def bundle(self):
         bundle_path = fullpath(self.get("bundle", None))
         if bundle_path:
@@ -255,8 +258,17 @@ class BundleDownloader(object):
 
                 else:
                     header("Cloning project %s at version %s" % (pkg.name, pkg.version))
+                    clone_url = pkg.url
+                    if (
+                        GitURL.parse(pkg.url).startswith("github.com")
+                        and self.github_token()
+                        and pkg.url.startswith("https://")
+                    ):
+                        clone_url = pkg.url.replace(
+                            "https://", f"https://{self.github_token()}@"
+                        )
                     self.git.clone(
-                        pkg.url,
+                        clone_url,
                         src_dir,
                         pkg.version,
                         pkg.remote,
