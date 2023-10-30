@@ -57,6 +57,7 @@ def args(here):
         "forced_update": False,
         "threads": 1,
         "shallow": False,
+        "git_token": ""
     }
 
 
@@ -277,3 +278,20 @@ def test_download_fail_optional(args, here, watcher):
         in watcher.output
     )
     assert "    - project1" in watcher.output
+
+
+def test_download_https(args, here, watcher):
+    """
+    Simple bundle creation test that git clones a single project using https and token.
+    """
+
+    args["bundle"] = "%s" % (here / "bundle_https.yml")
+    args["git_token"] = "secrettoken"
+
+    with watcher:
+        BundleDownloader(**args).download()
+
+    assert (
+        "git clone -o ec-user https://secrettoken@github.com/user/project1.git" in watcher.output
+    )
+    assert "git -c advice.detachedHead=false checkout 0.0.1" in watcher.output

@@ -1,0 +1,11 @@
+---
+### Bundle
+
+name    : test-bundle-https
+
+projects :
+    - project1 :
+        git     : https://github.com/user/project1.git
+        remote  : ec-user
+        version : 0.0.1
+        bundle  : false
