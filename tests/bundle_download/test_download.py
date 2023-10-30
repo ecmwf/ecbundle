@@ -57,7 +57,7 @@ def args(here):
         "forced_update": False,
         "threads": 1,
         "shallow": False,
-        "git_token": "",
+        "github_token": "",
     }
 
 
@@ -286,7 +286,7 @@ def test_download_https(args, here, watcher):
     """
 
     args["bundle"] = "%s" % (here / "bundle_https.yml")
-    args["git_token"] = "secrettoken"
+    args["github_token"] = "secrettoken"
 
     with watcher:
         BundleDownloader(**args).download()
