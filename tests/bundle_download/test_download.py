@@ -57,7 +57,7 @@ def args(here):
         "forced_update": False,
         "threads": 1,
         "shallow": False,
-        "git_token": ""
+        "git_token": "",
     }
 
 
@@ -292,6 +292,7 @@ def test_download_https(args, here, watcher):
         BundleDownloader(**args).download()
 
     assert (
-        "git clone -o ec-user https://secrettoken@github.com/user/project1.git" in watcher.output
+        "git clone -o ec-user https://secrettoken@github.com/user/project1.git"
+        in watcher.output
     )
     assert "git -c advice.detachedHead=false checkout 0.0.1" in watcher.output

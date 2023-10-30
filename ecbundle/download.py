@@ -260,7 +260,9 @@ class BundleDownloader(object):
                     header("Cloning project %s at version %s" % (pkg.name, pkg.version))
                     clone_url = pkg.url
                     if self.git_token() and pkg.url.startswith("https://"):
-                        clone_url = pkg.url.replace("https://", f"https://{self.git_token()}@")
+                        clone_url = pkg.url.replace(
+                            "https://", f"https://{self.git_token()}@"
+                        )
                     self.git.clone(
                         clone_url,
                         src_dir,
