@@ -1,0 +1,13 @@
+### Bundle
+
+name    : test-symlink-subdir
+
+projects :
+    - test_project_1 :
+        git     : ${BITBUCKET}/ecsdk/test_project_1
+        version : 0.0.1
+        bundle  : false
+
+    - subdir1 :
+        dir     : test_project_1/subdir1
+        bundle  : false

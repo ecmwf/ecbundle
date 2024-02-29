@@ -340,6 +340,7 @@ class BundleDownloader(object):
             if project.dir() and (
                 os.path.exists(project.dir())
                 or project.dir() in [p.name for p in git_projects]
+                or os.path.dirname(project.dir()) in [p.name for p in git_projects]
                 or project.dir() in [p.name() for p in symlink_projects]
             ):
                 symlink_projects.append(project)

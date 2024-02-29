@@ -277,3 +277,23 @@ def test_download_fail_optional(args, here, watcher):
         in watcher.output
     )
     assert "    - project1" in watcher.output
+
+
+def test_symlink_subdir(args, here, watcher):
+    """
+    Add cloned project subdir as a symlinked bundle entry
+    """
+    args["dry_run"] = False
+    args["dryrun"] = False
+    args["bundle"] = "%s" % (here / "bundle_subdir.yml")
+
+    with watcher:
+        BundleDownloader(**args).download()
+
+    assert (
+        "git clone -o origin ssh://git@git.ecmwf.int/ecsdk/test_project_1"
+        in watcher.output
+    )
+
+    assert ("Following projects are symlinked in") in watcher.output
+    assert "- subdir1 (test_project_1/subdir1)" in watcher.output
