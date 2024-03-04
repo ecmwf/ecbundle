@@ -465,7 +465,6 @@ class BundleBuilder(object):
         return return_cmake_args
 
     def create_scripts(self):
-
         src_dir = self.src_dir()
         build_dir = self.build_dir()
         install_dir = self.install_dir()

@@ -67,6 +67,9 @@ def main():
                         help='download shallow git repositories (no history)',
                         action='store_true')
 
+    parser.add_argument('--github-token',
+                        help='Token to be used for github.com https authentication')
+
     # --------------------------------------------------------------------------
 
     # Close parser and populate variable args

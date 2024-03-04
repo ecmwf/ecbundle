@@ -106,6 +106,9 @@ class BundleDownloader(object):
     def src_dir(self):
         return fullpath(self.get("src_dir", "source"))
 
+    def github_token(self):
+        return self.get("github_token")
+
     def bundle(self):
         bundle_path = fullpath(self.get("bundle", None))
         if bundle_path:
@@ -129,7 +132,6 @@ class BundleDownloader(object):
         return None
 
     def download(self):
-
         dryrun = self.dryrun()
 
         downloaded_packages = list()
@@ -170,9 +172,7 @@ class BundleDownloader(object):
             src_dir = path.join(download_dir, pkg.name)
             try:
                 if path.exists(src_dir):
-
                     if self.update():
-
                         header(
                             "Checkout project %s @ %s"
                             % (GitURL.parse(pkg.url), pkg.version)
@@ -258,8 +258,17 @@ class BundleDownloader(object):
 
                 else:
                     header("Cloning project %s at version %s" % (pkg.name, pkg.version))
+                    clone_url = pkg.url
+                    if (
+                        GitURL.parse(pkg.url).startswith("github.com")
+                        and self.github_token()
+                        and pkg.url.startswith("https://")
+                    ):
+                        clone_url = pkg.url.replace(
+                            "https://", f"https://{self.github_token()}@"
+                        )
                     self.git.clone(
-                        pkg.url,
+                        clone_url,
                         src_dir,
                         pkg.version,
                         pkg.remote,
@@ -340,6 +349,7 @@ class BundleDownloader(object):
             if project.dir() and (
                 os.path.exists(project.dir())
                 or project.dir() in [p.name for p in git_projects]
+                or os.path.dirname(project.dir()) in [p.name for p in git_projects]
                 or project.dir() in [p.name() for p in symlink_projects]
             ):
                 symlink_projects.append(project)
@@ -364,7 +374,7 @@ class BundleDownloader(object):
 
         if len(downloaded_packages) and not dryrun:
             header("\nFollowing projects are checked out in " + self.src_dir() + ":")
-            for (url, version, sha1) in downloaded_packages:
+            for url, version, sha1 in downloaded_packages:
                 print("    - " + url + " (" + version + ")  [" + sha1 + "]")
 
         if len(symlink_projects):
