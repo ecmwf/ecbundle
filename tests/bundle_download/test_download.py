@@ -45,6 +45,21 @@ def project1_dir(here):
 
 
 @pytest.fixture
+def project1_subdir1_dir(here):
+    """
+    Create empty source/project1/subdir1 directory
+    """
+    project_dir = here / "source/project1/subdir1"
+    if project_dir.exists():
+        project_dir.rmdir()
+    project_dir.mkdir(parents=True)
+    yield
+
+    # Clean up after us
+    rmtree(here / "source")
+
+
+@pytest.fixture
 def args(here):
     return {
         "no_colour": True,
@@ -296,3 +311,16 @@ def test_download_https(args, here, watcher):
         in watcher.output
     )
     assert "git -c advice.detachedHead=false checkout 0.0.1" in watcher.output
+
+
+def test_symlink_subdir(args, here, project1_subdir1_dir, watcher):
+    """
+    Add cloned project subdir as a symlinked bundle entry
+    """
+    args["bundle"] = "%s" % (here / "bundle_subdir.yml")
+
+    with watcher:
+        BundleDownloader(**args).download()
+
+    assert ("Following projects are symlinked in") in watcher.output
+    assert "- subdir1 (project1/subdir1)" in watcher.output
