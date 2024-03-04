@@ -365,7 +365,7 @@ class BundleDownloader(object):
 
         if len(downloaded_packages) and not dryrun:
             header("\nFollowing projects are checked out in " + self.src_dir() + ":")
-            for (url, version, sha1) in downloaded_packages:
+            for url, version, sha1 in downloaded_packages:
                 print("    - " + url + " (" + version + ")  [" + sha1 + "]")
 
         if len(symlink_projects):
