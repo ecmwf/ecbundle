@@ -71,7 +71,7 @@ def main():
     parser.add_argument('--arch',
                         help='Path to directory containing architecture info')
     parser.add_argument('--list-archs',
-                        help='Path to directory containing architecture info',
+                        help='List the available architectures',
                         action='store_true')
 
     parser.add_argument('--src-dir',
