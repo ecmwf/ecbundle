@@ -313,14 +313,27 @@ def test_download_https(args, here, watcher):
     assert "git -c advice.detachedHead=false checkout 0.0.1" in watcher.output
 
 
-def test_symlink_subdir(args, here, project1_subdir1_dir, watcher):
+def test_symlink_cloned_project_subdir(args, here, project1_subdir1_dir, watcher):
     """
     Add cloned project subdir as a symlinked bundle entry
     """
-    args["bundle"] = "%s" % (here / "bundle_subdir.yml")
+    args["bundle"] = "%s" % (here / "bundle_cloned_subdir.yml")
 
     with watcher:
         BundleDownloader(**args).download()
 
     assert ("Following projects are symlinked in") in watcher.output
     assert "- subdir1 (project1/subdir1)" in watcher.output
+
+
+def test_symlink_symlinked_project_subdir(args, here, project1_subdir1_dir, watcher):
+    """
+    Add symlinked project subdir as a symlinked bundle entry
+    """
+    args["bundle"] = "%s" % (here / "bundle_symlinked_subdir.yml")
+
+    with watcher:
+        BundleDownloader(**args).download()
+
+    assert ("Following projects are symlinked in") in watcher.output
+    assert "- subdir1 (symlink_project1/subdir1)" in watcher.output
