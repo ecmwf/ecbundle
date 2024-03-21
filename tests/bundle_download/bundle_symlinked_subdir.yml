@@ -1,0 +1,16 @@
+### Bundle
+
+name    : test-symlink-subdir
+
+projects :
+    - project1 :
+        git     : ${BITBUCKET}/user/project1
+        version : 0.0.1
+        bundle  : false
+
+    - symlink_project1 :
+        dir     : project1
+
+    - subdir1 :
+        dir     : symlink_project1/subdir1
+        bundle  : false
