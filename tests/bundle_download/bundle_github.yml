@@ -1,0 +1,10 @@
+---
+### Bundle
+
+name    : test-bundle-https
+
+projects :
+    - project1 :
+        git     : ${GITHUB}/user/project1.git
+        version : 0.0.1
+        bundle  : false
