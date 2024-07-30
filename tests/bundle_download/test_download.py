@@ -14,7 +14,7 @@ from shutil import rmtree
 import pytest
 from conftest import Watcher
 
-from ecbundle import BundleDownloader, Git, logger
+from ecbundle import GITHUB_URL, BundleDownloader, Git, logger
 
 os.environ["BITBUCKET"] = "ssh://git@git.ecmwf.int"
 
@@ -337,3 +337,41 @@ def test_symlink_symlinked_project_subdir(args, here, project1_subdir1_dir, watc
 
     assert ("Following projects are symlinked in") in watcher.output
     assert "- subdir1 (symlink_project1/subdir1)" in watcher.output
+
+
+@pytest.fixture(
+    name="github_env_var", params=[None, "https://github.com", "ssh://git@github.com"]
+)
+def fixture_github_env_var(request):
+    """
+    Fixture to set the GITHUB environment variable to various values
+    """
+    orig_value = os.environ.get("GITHUB", None)
+
+    if request.param is None:
+        os.environ.pop("GITHUB", None)
+    else:
+        os.environ["GITHUB"] = request.param
+
+    yield request.param or GITHUB_URL
+
+    if orig_value is None:
+        os.environ.pop("GITHUB", None)
+    else:
+        os.environ["GITHUB"] = orig_value
+
+
+def test_download_github(args, here, watcher, github_env_var):
+    """
+    Simple bundle creation test that git clones a single project using
+    the provided GITHUB environment variable value
+    """
+    args["bundle"] = "%s" % (here / "bundle_github.yml")
+
+    with watcher:
+        BundleDownloader(**args).download()
+
+    assert (
+        "git clone -o origin " + github_env_var + "/user/project1"
+    ) in watcher.output
+    assert "git -c advice.detachedHead=false checkout 0.0.1" in watcher.output
