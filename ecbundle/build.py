@@ -134,13 +134,13 @@ configure_sh = string.Template(
 # before the build is configured
 
 SCRIPT_DIR="$( cd $( dirname "${BASH_SOURCE[0]}" ) && pwd -P )"
-cd ${SCRIPT_DIR}
+cd "${SCRIPT_DIR}"
 
 LOG_FILE=${SCRIPT_DIR}/build.log
 exec 1> >(tee -a "$LOG_FILE") 2>&1
 shopt -s expand_aliases
 alias trace_on='set -x'
-alias trace_off='{ PREV_STATUS=$? ; set +x; sync; } 2>/dev/null; (exit $PREV_STATUS)'
+alias trace_off='{ PREV_STATUS=$? ; set +x; sync "${LOG_FILE}"; } 2>/dev/null; (exit $PREV_STATUS)'
 
 ### Environment
 echo "=============================================================="

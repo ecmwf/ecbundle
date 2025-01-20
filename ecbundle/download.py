@@ -61,6 +61,7 @@ class GitURL(object):
 
 
 ECMWF_BITBUCKET_URL = "ssh://git@git.ecmwf.int"
+GITHUB_URL = "https://github.com"
 
 
 class BundleDownloader(object):
@@ -152,6 +153,7 @@ class BundleDownloader(object):
                 if project.git():
                     self.url = project.git()
                     self.url = self.url.replace("${BITBUCKET}", ECMWF_BITBUCKET_URL)
+                    self.url = self.url.replace("${GITHUB}", GITHUB_URL)
                 else:
                     error("git not given for package " + self.name)
 
