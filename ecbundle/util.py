@@ -103,8 +103,11 @@ def symlink_force(target, link_name):
     import errno
     import os
 
+    # prefer relative symlink rather than absolute
+    rel_target = os.path.relpath(target, os.path.dirname(link_name))
+
     try:
-        os.symlink(target, link_name)
+        os.symlink(rel_target, link_name)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST:
             os.remove(link_name)
