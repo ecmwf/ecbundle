@@ -79,7 +79,7 @@ class BundleDownloader(object):
                 colors.enable()
 
     def get(self, key, default=None):
-        return self.config[key] if self.config[key] is not None else default
+        return self.config.get(key, default)
 
     def dryrun(self):
         if self.get("dryrun"):
