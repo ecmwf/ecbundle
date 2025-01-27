@@ -350,6 +350,7 @@ class BundleDownloader(object):
         for project in bundle.projects():
             if project.dir() and (
                 os.path.exists(project.dir())
+                or os.path.exists(self.src_dir() + "/" + project.dir())
                 or project.dir() in [p.name for p in git_projects]
                 or os.path.dirname(project.dir()) in [p.name for p in git_projects]
                 or project.dir() in [p.name() for p in symlink_projects]
