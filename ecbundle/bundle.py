@@ -14,7 +14,7 @@ from .logging import error, header, success
 from .option import Option
 from .parse import parse_yaml_file, splitted, to_yaml_str
 from .project import Project
-from .util import fullpath, symlink_force
+from .util import fullpath, mkdir_p, symlink_force
 
 __all__ = ["Bundle", "BundleCreator"]
 
@@ -175,6 +175,8 @@ class BundleCreator(object):
         header("    " + bundle.file())
 
         src_dir = self.src_dir()
+        mkdir_p(src_dir)
+
         bundle_yml_file = src_dir + "/bundle.yml"
 
         if self.bundle_needs_updating():
