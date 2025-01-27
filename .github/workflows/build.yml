@@ -16,7 +16,7 @@ on:
   workflow_dispatch: ~
 
 env:
-  PYTHON_VERSION: 3.9
+  PYTHON_VERSION: "3.10"
 
 jobs:
 
@@ -24,7 +24,7 @@ jobs:
     name: Code QA
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: pip install black flake8 isort
     - run: black --version
     - run: isort --check .
@@ -39,10 +39,10 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     needs: quality
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - run: pip install .
@@ -54,11 +54,15 @@ jobs:
     - name: Run tests
       run: pytest
     - name: Generate Coverage
+      if: matrix.os == 'ubuntu-latest'
       run: |
         pip install pytest-cov
         python -m pytest --cov=./ --cov-report=xml
     - name: "Upload coverage to Codecov"
-      uses: codecov/codecov-action@v2
+      if: matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v5
       with:
         fail_ci_if_error: true
         verbose : true
+        token: ${{ secrets.CODECOV_UPLOAD_TOKEN }}
+
