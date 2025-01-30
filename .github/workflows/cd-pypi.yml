@@ -8,5 +8,6 @@ on:
 jobs:
   deploy:
     uses: ecmwf-actions/reusable-workflows/.github/workflows/cd-pypi.yml@skip-checks
+    with:
+        testpypi: true
     secrets: inherit
-    testpypi: true
