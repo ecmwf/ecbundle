@@ -316,7 +316,7 @@ class BundleDownloader(object):
 
         def download_data(data_packages, download_dir):
             for data in data_packages:
-                header("Downloading data " + data.name)
+                header("Downloading data " + data.name())
                 filename = path.basename(data.url())
                 do_download = True
                 if path.exists(download_dir + "/" + filename):
