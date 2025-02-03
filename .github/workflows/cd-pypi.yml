@@ -2,12 +2,10 @@ name: cd-pypi
 
 on:
   push:
-    #tags:
-    #- '**'
+    tags:
+    - '**'
 
 jobs:
   deploy:
-    uses: ecmwf-actions/reusable-workflows/.github/workflows/cd-pypi.yml@skip-checks
-    with:
-        testpypi: true
+    uses: ecmwf-actions/reusable-workflows/.github/workflows/cd-pypi.yml@v2
     secrets: inherit
