@@ -43,6 +43,7 @@ setuptools.setup(
     author_email="software.support@ecmwf.int",
     description="Bundle management tool for CMake projects",
     long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     packages=setuptools.find_packages(exclude=["tests"]),
     install_requires=["ruamel.yaml", "pathlib"],
     test_requires=["pytest", "flake8"],

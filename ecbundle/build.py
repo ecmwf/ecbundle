@@ -9,7 +9,7 @@
 import re
 import string
 import sys
-from os import chmod, getcwd, listdir, path, readlink
+from os import chmod, getcwd, listdir, path
 from shutil import copyfile
 from subprocess import CalledProcessError, check_call
 
@@ -579,7 +579,7 @@ fi
                     if path.isfile(build_dir + "/" + f):
                         copyfile(build_dir + "/" + f, backup_dir + "/" + f)
                     if path.islink(build_dir + "/" + f):
-                        copyfile(readlink(build_dir + "/" + f), backup_dir + "/" + f)
+                        copyfile(path.realpath(build_dir + "/" + f), backup_dir + "/" + f)
 
         return backup_dir
 
