@@ -81,6 +81,9 @@ def main():
     parser.add_argument('--install-dir',
                         help='Directory where package will be installed')
 
+    parser.add_argument('--artifacts-dir',
+                        help='Location where artifacts are stored (default={{src-dir}}/artifacts')
+
     parser.add_argument('--target', action='append',
                         help='Target to build. Can be used repeatedly. If no targets are named '
                         'the default behaviour of the selected build tool will be invoked.')

@@ -17,7 +17,7 @@ import sys
 from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
 
 sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.realpath(__file__))+'/..'))
-from ecbundle import BundleCreator, BundleDownloader, CacheCreator, Timer
+from ecbundle import CacheCreator, Timer
 from ecbundle.logging import DEBUG, colors, error, logger, success
 
 
@@ -51,24 +51,8 @@ def main():
     parser.add_argument('--src-dir',
                         help='Directory containing repositories', default='source')
 
-    parser.add_argument('--update',
-                        help='Update local checkout with remote changes',
-                        action='store_true')
-
-    parser.add_argument('--forced-update',
-                        help='Overwrite local checkout with remote changes if needed',
-                        action='store_true')
-
-    parser.add_argument('-j', '--threads', type=int, default=1,
-                        help='number of concurrent download threads (defaults to 1). '
-                        + 'Choosing --threads=0 (or -j0) will use a maximum guess')
-
-    parser.add_argument('--shallow',
-                        help='download shallow git repositories (no history)',
-                        action='store_true')
-
-    parser.add_argument('--github-token',
-                        help='Token to be used for github.com https authentication')
+    parser.add_argument('--artifacts-dir',
+                        help='Location where downloaded data will be stored (default={{src-dir}}/artifacts')
 
     # --------------------------------------------------------------------------
 
@@ -83,16 +67,13 @@ def main():
     if args.verbose:
         logger.setLevel(DEBUG)
 
-    download_timer = Timer()
+    timer = Timer()
 
     errcode = 0
-    if BundleDownloader(**vars(args)).download() != 0:
-        errcode = 1 # error
+    if CacheCreator(**vars(args)).create() != 0:
+        errcode = 1 # error§
 
-    success("\nTime elapsed for downloading: %s\n" % download_timer.elapsed_str())
-
-    if BundleCreator(**vars(args)).create() != 0:
-        errcode = 1 # error
+    success("\nTime elapsed for populating cache: %s\n" % timer.elapsed_str())
 
     if errcode == 1:
         error("\n!!! Errors occured !!!")
