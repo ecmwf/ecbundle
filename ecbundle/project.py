@@ -52,6 +52,13 @@ class Project(object):
         else:
             return None
 
+    def populate(self):
+        if self.get("populate"):
+            split = [c.strip() for c in splitted(self.get("populate"))]
+            return [c for c in split if c]
+        else:
+            return None
+
     def dir(self):
         return self.get("dir")
 

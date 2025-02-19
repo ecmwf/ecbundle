@@ -17,8 +17,26 @@ import sys
 from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
 
 sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.realpath(__file__))+'/..'))
-from ecbundle import BundleCreator, BundleDownloader, Populator, Timer
+from ecbundle.bundle import Bundle
 from ecbundle.logging import DEBUG, colors, error, logger, success
+from ecbundle.populate import Populator
+from ecbundle.util import Timer, fullpath
+
+
+def get_src_dir():
+    src_dir = "source"
+    for i, arg in enumerate(sys.argv):
+        if arg.startswith("--src-dir="):
+            src_dir = arg.split("=")[1]
+        elif arg.startswith("--src-dir"):
+            src_dir = sys.argv[i + 1]
+    src_dir = fullpath(src_dir)
+    return src_dir
+
+
+def get_populate_options():
+    bundle = Bundle(get_src_dir() + '/bundle.yml')
+    return bundle.populate_options()
 
 
 def main():
@@ -45,30 +63,26 @@ def main():
                         help=SUPPRESS,
                         action='store_true')
 
-    parser.add_argument('--bundle',
-                        help='Configuration of bundle', default=os.getcwd())
-
     parser.add_argument('--src-dir',
                         help='Directory containing repositories', default='source')
 
-    parser.add_argument('--update',
-                        help='Update local checkout with remote changes',
-                        action='store_true')
+    parser.add_argument('--artifacts-dir',
+                        help='Location where downloaded data will be stored (default={{src-dir}}/artifacts')
 
-    parser.add_argument('--forced-update',
-                        help='Overwrite local checkout with remote changes if needed',
-                        action='store_true')
+    try:
+        typemap = {'str': str, 'int': int}
+        options = get_populate_options()
+        for opt in options:
+            arg_opts = {}
+            if opt.type():
+                if opt.type() in typemap:
+                    arg_opts['type'] = typemap[opt.type()]
+            else:
+                arg_opts['action'] = 'store_true'
+            parser.add_argument('--' + opt.name(), help=opt.help(), **arg_opts)
 
-    parser.add_argument('-j', '--threads', type=int, default=1,
-                        help='number of concurrent download threads (defaults to 1). '
-                        + 'Choosing --threads=0 (or -j0) will use a maximum guess')
-
-    parser.add_argument('--shallow',
-                        help='download shallow git repositories (no history)',
-                        action='store_true')
-
-    parser.add_argument('--github-token',
-                        help='Token to be used for github.com https authentication')
+    except IOError:
+        pass
 
     # --------------------------------------------------------------------------
 
@@ -83,16 +97,13 @@ def main():
     if args.verbose:
         logger.setLevel(DEBUG)
 
-    download_timer = Timer()
+    timer = Timer()
 
     errcode = 0
-    if BundleDownloader(**vars(args)).download() != 0:
-        errcode = 1 # error
+    if Populator(**vars(args)).create() != 0:
+        errcode = 1 # error§
 
-    success("\nTime elapsed for downloading: %s\n" % download_timer.elapsed_str())
-
-    if BundleCreator(**vars(args)).create() != 0:
-        errcode = 1 # error
+    success("\nTime elapsed for populating cache: %s\n" % timer.elapsed_str())
 
     if errcode == 1:
         error("\n!!! Errors occured !!!")
