@@ -348,24 +348,9 @@ class BundleDownloader(object):
         header("    " + bundle.file())
 
         for project in bundle.projects():
-            if project.dir() and (
-                os.path.exists(project.dir())
-                or os.path.exists(self.src_dir() + "/" + project.dir())
-                or project.dir() in [p.name for p in git_projects]
-                or os.path.dirname(project.dir()) in [p.name for p in git_projects]
-                or project.dir() in [p.name() for p in symlink_projects]
-                or os.path.dirname(project.dir())
-                in [p.name() for p in symlink_projects]
-            ):
+            if project.dir():
                 symlink_projects.append(project)
             else:
-                if project.dir():
-                    error(
-                        "A directory [%s] is provided for project [%s] but it does not exist."
-                        % (project.dir(), project.name())
-                    )
-                    errcode = 1
-                    continue
                 git_projects.append(GitPackage(project))
 
         for package in bundle.data():
@@ -396,6 +381,17 @@ class BundleDownloader(object):
                     )
                     errcode = 1
                     continue
+
+                if not os.path.exists(project.dir()) and not os.path.exists(
+                    self.src_dir() + "/" + project.dir()
+                ):
+                    error(
+                        "A directory [%s] is provided for project [%s] but it does not exist."
+                        % (project.dir(), project.name())
+                    )
+                    errcode = 1
+                    continue
+
                 symlink_force(project.dir(), linkname)
 
                 print("    - " + project.name() + " (" + project.dir() + ")")
