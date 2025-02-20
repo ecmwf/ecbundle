@@ -579,7 +579,9 @@ fi
                     if path.isfile(build_dir + "/" + f):
                         copyfile(build_dir + "/" + f, backup_dir + "/" + f)
                     if path.islink(build_dir + "/" + f):
-                        copyfile(path.realpath(build_dir + "/" + f), backup_dir + "/" + f)
+                        copyfile(
+                            path.realpath(build_dir + "/" + f), backup_dir + "/" + f
+                        )
 
         return backup_dir
 
