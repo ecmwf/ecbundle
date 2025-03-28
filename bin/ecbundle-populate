@@ -17,8 +17,26 @@ import sys
 from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
 
 sys.path.insert(0, os.path.realpath(os.path.dirname(os.path.realpath(__file__))+'/..'))
-from ecbundle import CacheCreator, Timer
+from ecbundle.bundle import Bundle
+from ecbundle.cache import CacheCreator
 from ecbundle.logging import DEBUG, colors, error, logger, success
+from ecbundle.util import Timer, fullpath
+
+
+def get_src_dir():
+    src_dir = "source"
+    for i, arg in enumerate(sys.argv):
+        if arg.startswith("--src-dir="):
+            src_dir = arg.split("=")[1]
+        elif arg.startswith("--src-dir"):
+            src_dir = sys.argv[i + 1]
+    src_dir = fullpath(src_dir)
+    return src_dir
+
+
+def get_populate_options():
+    bundle = Bundle(get_src_dir() + '/bundle.yml')
+    return bundle.populate_options()
 
 
 def main():
@@ -53,6 +71,21 @@ def main():
 
     parser.add_argument('--artifacts-dir',
                         help='Location where downloaded data will be stored (default={{src-dir}}/artifacts')
+
+    try:
+        typemap = {'str': str, 'int': int}
+        options = get_populate_options()
+        for opt in options:
+            arg_opts = {}
+            if opt.type():
+                if opt.type() in typemap:
+                    arg_opts['type'] = typemap[opt.type()]
+            else:
+                arg_opts['action'] = 'store_true'
+            parser.add_argument('--' + opt.name(), help=opt.help(), **arg_opts)
+
+    except IOError:
+        pass
 
     # --------------------------------------------------------------------------
 

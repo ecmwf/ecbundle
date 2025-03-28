@@ -75,6 +75,14 @@ class Bundle(object):
         # Python 2:
         # return [Option(name=opt.items()[0][0], **opt.items()[0][1]) for opt in optconf]
 
+    def populate_options(self):
+        optconf = self.get("populate_options", [])
+        return [
+            Option(name=key, **dict(val.items()))
+            for opt in optconf
+            for (key, val) in opt.items()
+        ]
+
     def file(self):
         return self.filepath
 
