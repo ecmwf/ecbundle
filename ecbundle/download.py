@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-import os
 import re
 from os import getcwd, makedirs, path
 from subprocess import check_call
@@ -382,16 +381,15 @@ class BundleDownloader(object):
                     if not path.exists(targetname):
                         targetname = path.join(self.src_dir(), project.dir())
 
-                if not os.path.exists(targetname):
+                if not path.exists(targetname):
                     error(
                         "A directory [%s] is provided for project [%s] but it does not exist."
                         % (targetname, project.name())
                     )
                     errcode = 1
                     continue
-                symlink_force(targetname, linkname)
 
-                if os.path.exists(linkname) and not os.path.islink(linkname):
+                if path.exists(linkname) and not path.islink(linkname):
                     error(
                         "There already exists a directory at %s "
                         "that would be overwritten by a symlink to [%s] .\n"
