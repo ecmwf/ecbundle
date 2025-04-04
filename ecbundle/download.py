@@ -372,27 +372,36 @@ class BundleDownloader(object):
 
             for project in symlink_projects:
                 linkname = self.src_dir() + "/" + project.name()
+                # Precedence for targetname:
+                #  1. absolute path
+                #  2. relative to the bundle file
+                #  3. relative to the source directory
+                targetname = project.dir()
+                if not path.isabs(targetname):
+                    targetname = path.join(path.dirname(bundle.file()), project.dir())
+                    if not path.exists(targetname):
+                        targetname = path.join(self.src_dir(), project.dir())
+
+                if not os.path.exists(targetname):
+                    error(
+                        "A directory [%s] is provided for project [%s] but it does not exist."
+                        % (targetname, project.name())
+                    )
+                    errcode = 1
+                    continue
+                symlink_force(targetname, linkname)
+
                 if os.path.exists(linkname) and not os.path.islink(linkname):
                     error(
                         "There already exists a directory at %s "
                         "that would be overwritten by a symlink to [%s] .\n"
                         "To avoid accidental deletion, it is left up to you to delete the "
-                        "existing directory." % (linkname, project.dir())
+                        "existing directory." % (linkname, targetname)
                     )
                     errcode = 1
                     continue
 
-                if not os.path.exists(project.dir()) and not os.path.exists(
-                    self.src_dir() + "/" + project.dir()
-                ):
-                    error(
-                        "A directory [%s] is provided for project [%s] but it does not exist."
-                        % (project.dir(), project.name())
-                    )
-                    errcode = 1
-                    continue
-
-                symlink_force(project.dir(), linkname)
+                symlink_force(targetname, linkname)
 
                 print("    - " + project.name() + " (" + project.dir() + ")")
 
