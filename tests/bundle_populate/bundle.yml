@@ -1,0 +1,28 @@
+---
+### Bundle
+
+name    : test-bundle-populate
+
+projects :
+
+    - project1 :
+        git     : ${BITBUCKET}/user/project1
+        version : 0.0.1
+        bundle  : false
+        populate: >
+                POPULATE_OPTION_1=0
+                POPULATE_OPTION_2=A
+
+populate_options:
+
+    - non-zero-option-1 :
+       help : Specify a non-default option 1
+       populate : POPULATE_OPTION_1=1
+
+    - option-2 :
+       help : Specify a non-default option 2
+       populate : POPULATE_OPTION_2={{value}}
+
+    - set-both-options :
+       help : Specify both options with single flag
+       populate : POPULATE_OPTION_1=1 POPULATE_OPTION_2={{value}}
