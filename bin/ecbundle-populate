@@ -63,9 +63,6 @@ def main():
                         help=SUPPRESS,
                         action='store_true')
 
-    parser.add_argument('--bundle',
-                        help='Configuration of bundle', default=os.getcwd())
-
     parser.add_argument('--src-dir',
                         help='Directory containing repositories', default='source')
 
