@@ -70,7 +70,6 @@ def args(here):
 
 
 def test_populate(here, args, populate, watcher):
-
     src_dir, project_dir = populate
     shutil.copy(here / "bundle.yml", src_dir / "bundle.yml")
 
@@ -88,7 +87,6 @@ def test_populate(here, args, populate, watcher):
     [{"non_zero_option_1": True}, {"option_2": "B"}, {"set_both_options": "B"}],
 )
 def test_populate_options(here, args, populate, watcher, populate_option):
-
     src_dir, project_dir = populate
     shutil.copy(here / "bundle.yml", src_dir / "bundle.yml")
 

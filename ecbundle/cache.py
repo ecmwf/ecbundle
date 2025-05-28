@@ -15,6 +15,7 @@ from .util import execute, fullpath
 
 __all__ = ["CacheCreator"]
 
+
 class CacheCreator(object):
     def __init__(self, **kwargs):
         self.config = kwargs
@@ -42,12 +43,13 @@ class CacheCreator(object):
         config_options = []
         bundle_options = bundle.populate_options()
         for bundle_opt in bundle_options:
-            name = bundle_opt.get('name')
+            name = bundle_opt.get("name")
             if self.get(name):
                 config_options += bundle_opt.populate(self.get(name))
 
         for project in bundle.projects():
             options = {}
+
             def update_options(populate_options):
                 if populate_options:
                     for pop in populate_options:
