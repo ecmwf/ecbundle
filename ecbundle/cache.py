@@ -15,17 +15,6 @@ from .util import execute, fullpath
 
 __all__ = ["CacheCreator"]
 
-
-def get_populate_options(bundle, config):
-    options = bundle.populate_options()
-    return dict(
-        (pop.split("=", 1)[0], pop.split("=", 1)[1])
-        for opt in options
-        for pop in opt.populate(config.get(opt.key(), None))
-        if opt.key() in config
-    )
-
-
 class CacheCreator(object):
     def __init__(self, **kwargs):
         self.config = kwargs
@@ -48,16 +37,25 @@ class CacheCreator(object):
 
     def create(self):
         bundle = self.bundle()
-        options = get_populate_options(bundle, self.config)
+
+        # Gather configured options, e.g. via command-line, to override bundle-project options
+        config_options = []
+        bundle_options = bundle.populate_options()
+        for bundle_opt in bundle_options:
+            name = bundle_opt.get('name')
+            if self.get(name):
+                config_options += bundle_opt.populate(self.get(name))
 
         for project in bundle.projects():
+            options = {}
+            def update_options(populate_options):
+                if populate_options:
+                    for pop in populate_options:
+                        k, v = pop.split("=", 1)
+                        options[k] = v
 
-            if project.populate():
-                for pop in project.populate():
-                    k, v = pop.split("=", 1)
-                    opt = options.get(k, None)
-                    if not opt or opt.replace('"', "") == "None":
-                        options.update({k: v})
+            update_options(project.populate())
+            update_options(config_options)
 
             create_cache = Path(self.src_dir()) / project.name() / "populate"
             if create_cache.is_file():
