@@ -8,12 +8,13 @@
 
 from ecbundle.build import *  # noqa
 from ecbundle.bundle import *  # noqa
-from ecbundle.data import *  # noqa
+from ecbundle.create import *  # noqa
 from ecbundle.download import *  # noqa
 from ecbundle.git import *  # noqa
 from ecbundle.logging import *  # noqa
 from ecbundle.option import *  # noqa
+from ecbundle.populate import *  # noqa
 from ecbundle.project import *  # noqa
 from ecbundle.util import *  # noqa
 
-__version__ = "2.2.2"
+__version__ = "2.3.0"

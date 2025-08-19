@@ -10,6 +10,7 @@ import re
 import string
 import sys
 from os import chmod, getcwd, listdir, path
+from pathlib import Path
 from shutil import copyfile
 from subprocess import CalledProcessError, check_call
 
@@ -341,6 +342,9 @@ class BundleBuilder(object):
     def install_dir(self):
         return fullpath(self.get("install_dir", "install"))
 
+    def artifacts_dir(self):
+        return fullpath(self.get("artifacts_dir", self.src_dir() + "/artifacts"))
+
     def threads(self):
         return self.get("threads", 1)
 
@@ -525,6 +529,9 @@ fi
         if self.no_colour():
             cmake_args += " -DECBUILD_NO_COLOUR=ON"
 
+        if Path(self.artifacts_dir()).is_dir():
+            cmake_args += " -DARTIFACTS_DIR=" + self.artifacts_dir()
+
         cmake_args += self.cmake_args()
 
         mkdir_p(build_dir)
@@ -579,7 +586,9 @@ fi
                     if path.isfile(build_dir + "/" + f):
                         copyfile(build_dir + "/" + f, backup_dir + "/" + f)
                     if path.islink(build_dir + "/" + f):
-                        copyfile(path.realpath(build_dir + "/" + f), backup_dir + "/" + f)
+                        copyfile(
+                            path.realpath(build_dir + "/" + f), backup_dir + "/" + f
+                        )
 
         return backup_dir
 

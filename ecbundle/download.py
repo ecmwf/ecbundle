@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-import os
 import re
 from os import getcwd, makedirs, path
 from subprocess import check_call
@@ -348,24 +347,9 @@ class BundleDownloader(object):
         header("    " + bundle.file())
 
         for project in bundle.projects():
-            if project.dir() and (
-                os.path.exists(project.dir())
-                or os.path.exists(self.src_dir() + "/" + project.dir())
-                or project.dir() in [p.name for p in git_projects]
-                or os.path.dirname(project.dir()) in [p.name for p in git_projects]
-                or project.dir() in [p.name() for p in symlink_projects]
-                or os.path.dirname(project.dir())
-                in [p.name() for p in symlink_projects]
-            ):
+            if project.dir():
                 symlink_projects.append(project)
             else:
-                if project.dir():
-                    error(
-                        "A directory [%s] is provided for project [%s] but it does not exist."
-                        % (project.dir(), project.name())
-                    )
-                    errcode = 1
-                    continue
                 git_projects.append(GitPackage(project))
 
         for package in bundle.data():
@@ -387,16 +371,35 @@ class BundleDownloader(object):
 
             for project in symlink_projects:
                 linkname = self.src_dir() + "/" + project.name()
-                if os.path.exists(linkname) and not os.path.islink(linkname):
+                # Precedence for targetname:
+                #  1. absolute path
+                #  2. relative to the bundle file
+                #  3. relative to the source directory
+                targetname = project.dir()
+                if not path.isabs(targetname):
+                    targetname = path.join(path.dirname(bundle.file()), project.dir())
+                    if not path.exists(targetname):
+                        targetname = path.join(self.src_dir(), project.dir())
+
+                if not path.exists(targetname):
+                    error(
+                        "A directory [%s] is provided for project [%s] but it does not exist."
+                        % (targetname, project.name())
+                    )
+                    errcode = 1
+                    continue
+
+                if path.exists(linkname) and not path.islink(linkname):
                     error(
                         "There already exists a directory at %s "
                         "that would be overwritten by a symlink to [%s] .\n"
                         "To avoid accidental deletion, it is left up to you to delete the "
-                        "existing directory." % (linkname, project.dir())
+                        "existing directory." % (linkname, targetname)
                     )
                     errcode = 1
                     continue
-                symlink_force(project.dir(), linkname)
+
+                symlink_force(targetname, linkname)
 
                 print("    - " + project.name() + " (" + project.dir() + ")")
 

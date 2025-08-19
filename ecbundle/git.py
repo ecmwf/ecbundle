@@ -133,7 +133,9 @@ class Git(object):
                 raise RuntimeError()
         else:
             commands.append(["git", "fetch", "--tags", remote])
-            commands.append(["git", "fetch", remote, "+refs/pull/*:refs/pull/*"])
+            commands.append(
+                ["git", "fetch", "--quiet", remote, "+refs/pull/*:refs/pull/*"]
+            )
 
         for command in commands:
             try:

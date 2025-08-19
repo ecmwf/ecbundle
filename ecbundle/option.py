@@ -41,12 +41,25 @@ class Option(object):
         else:
             return None
 
+    def populate(self, value=None):
+        if self.get("populate"):
+            populate_str = self.get("populate")
+            if "{{value}}" in populate_str:
+                populate_str = populate_str.replace("{{value}}", '"' + str(value) + '"')
+            return splitted(populate_str)
+        else:
+            return None
+
     def type(self):
         if self.get("type"):
             return self.get("type")
         if self.get("cmake"):
             cmake_str = self.get("cmake")
             if "{{value}}" in cmake_str:
+                return "str"
+        if self.get("populate"):
+            populate_str = self.get("populate")
+            if "{{value}}" in populate_str:
                 return "str"
         return None
 
