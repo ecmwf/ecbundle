@@ -17,4 +17,4 @@ from ecbundle.populate import *  # noqa
 from ecbundle.project import *  # noqa
 from ecbundle.util import *  # noqa
 
-__version__ = "2.2.2"
+__version__ = "2.3.0"
