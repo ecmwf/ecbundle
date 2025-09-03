@@ -25,6 +25,14 @@ SCRIPT_NAME = path.basename(sys.argv[0])
 SCRIPT_DIR = path.dirname(path.abspath(__file__))
 
 
+def remove_prefix(string, prefix):
+    return re.sub(r"^{0}".format(prefix), "", string)
+
+
+def remove_suffix(string, suffix):
+    return re.sub(r"{0}$".format(suffix), "", string)
+
+
 class NinjaBackend:
     def cmake_generator(self):
         return "-G Ninja"
@@ -517,11 +525,22 @@ fi
             cmake_args += " -DECBUILD_LOG_LEVEL=" + self.log()
 
         options = self.bundle().options()
-        for opt in options:
-            arg = self.get(opt.key())
-            if arg:
-                if opt.cmake():
-                    cmake_args += " " + " ".join(["-D" + o for o in opt.cmake(arg)])
+
+        # Apply bundle options in order given by user:
+        for posarg in sys.argv[1:]:
+            if posarg.startswith("--"):
+                posarg = remove_suffix(remove_prefix(posarg, "--"), "=.*").replace(
+                    "-", "_"
+                )
+                for opt in options:
+                    arg = self.get(opt.key())
+                    if opt.key() == posarg:
+                        if arg:
+                            if opt.cmake():
+                                cmake_args += " " + " ".join(
+                                    ["-D" + o for o in opt.cmake(arg)]
+                                )
+                        break
 
         if self.without_tests():
             cmake_args += " -DENABLE_TESTS=OFF"
