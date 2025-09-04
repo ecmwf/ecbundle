@@ -105,6 +105,7 @@ def symlink_force(target, link_name):
 
     # prefer relative symlink rather than absolute
     # check first if target is absolute or relative
+    target_orig = target
     if os.path.isabs(target):
         target = os.path.relpath(target, os.path.dirname(link_name))
 
@@ -117,6 +118,11 @@ def symlink_force(target, link_name):
         else:
             raise exc
 
+    # If a relative link is invalid, retry with absolute path if available
+    if not os.path.exists(link_name):
+        if target != target_orig:
+            os.remove(link_name)
+            os.symlink(target_orig, link_name)
 
 def copydir(src_dir, target_dir):
     import os
