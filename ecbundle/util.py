@@ -124,6 +124,15 @@ def symlink_force(target, link_name):
             os.remove(link_name)
             os.symlink(target_orig, link_name)
 
+    if not os.path.exists(link_name):
+        error(
+            "ERROR: Failed to create valid link from {0} to {1}".format(
+                link_name, target_orig
+            )
+        )
+        raise RuntimeError()
+
+
 def copydir(src_dir, target_dir):
     import os
     from subprocess import CalledProcessError, check_call
