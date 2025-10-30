@@ -106,7 +106,9 @@ def symlink_force(target, link_name):
     # prefer relative symlink rather than absolute
     # check first if target is absolute or relative
     if os.path.isabs(target):
-        target = os.path.relpath(target, os.path.dirname(link_name))
+        target = os.path.relpath(
+            os.path.realpath(target), os.path.realpath(os.path.dirname(link_name))
+        )
 
     try:
         os.symlink(target, link_name)
