@@ -17,6 +17,7 @@ from subprocess import CalledProcessError, check_call
 from .bundle import Bundle
 from .logging import colors, error, header, success
 from .util import Timer, fullpath, mkdir_p, symlink_force
+from .version import __version__
 
 __all__ = ["BundleBuilder"]
 
@@ -547,6 +548,7 @@ fi
                 env.write("# Empty environment\n")
 
         mappings = dict(
+            ecbundle_version=__version__,
             bundle_name=self.bundle().name(),
             src_dir=src_dir,
             install_dir=install_dir,
