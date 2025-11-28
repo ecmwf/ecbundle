@@ -158,7 +158,9 @@ def main():
     if args.verbose:
         logger.setLevel(DEBUG)
 
-    build = BundleBuilder(**vars(args))
+    genesis = "cd " + os.getcwd()
+    genesis += "\n" + " ".join(sys.argv[:])
+    build = BundleBuilder(**vars(args), genesis=genesis)
 
     if args.list_archs:
         build.list_archs()
