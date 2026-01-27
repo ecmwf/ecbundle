@@ -9,6 +9,7 @@
 import re
 from os import getcwd, makedirs, path
 from subprocess import check_call
+from hashlib import md5
 
 from .bundle import Bundle
 from .data import Data
@@ -139,8 +140,7 @@ class BundleDownloader(object):
         skipped_optional_packages = list()
 
         class GitPackage:
-            def __init__(self, project):
-                self.remote = project.remote()
+            def __init__(self, project, src_dir=None):
                 self.url = None
                 self.name = project.name()
                 self.version = str(project.version())
@@ -165,7 +165,24 @@ class BundleDownloader(object):
 
                 elif self.url.startswith("~"):
                     self.url = path.expanduser(self.url)
-                self.remote_str = self.remote
+                self._set_remote(project, src_dir=src_dir)
+
+            def _set_remote(self, project, src_dir=None):
+                from .git import Git
+                remote = project.remote(default=None)
+                if remote is None:
+                    if src_dir is None or not path.exists(src_dir):
+                        remote = 'origin'
+                    else:
+                        # look for an existing remote with requested url
+                        for remote_name, remote_url in Git.remotes(src_dir).items():
+                            if remote_url == self.url:
+                                remote = remote_name
+                                break
+                        if remote is None:
+                            # not found: use a bijective alias to url
+                            remote = md5(self.url.encode('utf-8')).hexdigest()
+                self.remote_str = remote
                 self.remote = self.remote_str.replace("~", "")
 
         def download_one_project(pkg):
@@ -350,7 +367,8 @@ class BundleDownloader(object):
             if project.dir():
                 symlink_projects.append(project)
             else:
-                git_projects.append(GitPackage(project))
+                src_dir = path.join(download_dir, project.name())
+                git_projects.append(GitPackage(project, src_dir=src_dir))
 
         for package in bundle.data():
             data.append(Data(**package.config))
