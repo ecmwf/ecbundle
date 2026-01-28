@@ -39,7 +39,7 @@ class Project(object):
     def git(self):
         return self.get("git")
 
-    def remote(self, default='origin'):
+    def remote(self, default="origin"):
         return self.get("remote", default)
 
     def submodules(self):

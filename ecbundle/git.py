@@ -258,9 +258,13 @@ class Git(object):
     def remotes(src_dir):
         command = ["git", "remote", "-v"]
         try:
-            remotes = execute(command, cwd=src_dir, silent=True, capture_output=True).strip().split('\n')
-            remotes = [l.split() for l in remotes]
-            return {l[0]:l[1] for l in remotes if l[2] == '(fetch)'}
+            remotes = (
+                execute(command, cwd=src_dir, silent=True, capture_output=True)
+                .strip()
+                .split("\n")
+            )
+            remotes = [line.split() for line in remotes]
+            return {line[0]: line[1] for line in remotes if line[2] == "(fetch)"}
         except CalledProcessError:
             raise RuntimeError()
 

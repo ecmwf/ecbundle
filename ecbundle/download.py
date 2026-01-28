@@ -7,9 +7,9 @@
 # does it submit to any jurisdiction.
 
 import re
+from hashlib import md5
 from os import getcwd, makedirs, path
 from subprocess import check_call
-from hashlib import md5
 
 from .bundle import Bundle
 from .data import Data
@@ -169,10 +169,11 @@ class BundleDownloader(object):
 
             def _set_remote(self, project, src_dir=None):
                 from .git import Git
+
                 remote = project.remote(default=None)
                 if remote is None:
                     if src_dir is None or not path.exists(src_dir):
-                        remote = 'origin'
+                        remote = "origin"
                     else:
                         # look for an existing remote with requested url
                         for remote_name, remote_url in Git.remotes(src_dir).items():
@@ -181,7 +182,7 @@ class BundleDownloader(object):
                                 break
                         if remote is None:
                             # not found: use a bijective alias to url
-                            remote = md5(self.url.encode('utf-8')).hexdigest()
+                            remote = md5(self.url.encode("utf-8")).hexdigest()
                 self.remote_str = remote
                 self.remote = self.remote_str.replace("~", "")
 
