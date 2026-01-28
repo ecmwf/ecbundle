@@ -39,8 +39,8 @@ class Project(object):
     def git(self):
         return self.get("git")
 
-    def remote(self):
-        return self.get("remote", "origin")
+    def remote(self, default="origin"):
+        return self.get("remote", default)
 
     def submodules(self):
         return self.get("submodules", False)

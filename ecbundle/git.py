@@ -254,6 +254,20 @@ class Git(object):
         except CalledProcessError:
             return None
 
+    @staticmethod
+    def remotes(src_dir):
+        command = ["git", "remote", "-v"]
+        try:
+            remotes = (
+                execute(command, cwd=src_dir, silent=True, capture_output=True)
+                .strip()
+                .split("\n")
+            )
+            remotes = [line.split() for line in remotes]
+            return {line[0]: line[1] for line in remotes if line[2] == "(fetch)"}
+        except CalledProcessError:
+            raise RuntimeError()
+
     @classmethod
     def is_remote(cls, src_dir, remote, dryrun):
         command = ["git", "ls-remote", remote]
