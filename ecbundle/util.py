@@ -99,6 +99,18 @@ def mkdir_p(path):
             raise RuntimeError()
 
 
+def remove_prefix(string, prefix):
+    import re
+
+    return re.sub(r"^{0}".format(prefix), "", string)
+
+
+def remove_suffix(string, suffix):
+    import re
+
+    return re.sub(r"{0}$".format(suffix), "", string)
+
+
 def symlink_force(target, link_name):
     import errno
     import os

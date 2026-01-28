@@ -469,6 +469,8 @@ class BundleBuilder(object):
         return return_cmake_args
 
     def create_scripts(self):
+        from .util import remove_prefix, remove_suffix
+
         src_dir = self.src_dir()
         build_dir = self.build_dir()
         install_dir = self.install_dir()
@@ -517,11 +519,22 @@ fi
             cmake_args += " -DECBUILD_LOG_LEVEL=" + self.log()
 
         options = self.bundle().options()
-        for opt in options:
-            arg = self.get(opt.key())
-            if arg:
-                if opt.cmake():
-                    cmake_args += " " + " ".join(["-D" + o for o in opt.cmake(arg)])
+
+        # Apply bundle options in order given by user:
+        for posarg in sys.argv[1:]:
+            if posarg.startswith("--"):
+                posarg = remove_suffix(remove_prefix(posarg, "--"), "=.*").replace(
+                    "-", "_"
+                )
+                for opt in options:
+                    arg = self.get(opt.key())
+                    if opt.key() == posarg:
+                        if arg:
+                            if opt.cmake():
+                                cmake_args += " " + " ".join(
+                                    ["-D" + o for o in opt.cmake(arg)]
+                                )
+                        break
 
         if self.without_tests():
             cmake_args += " -DENABLE_TESTS=OFF"
