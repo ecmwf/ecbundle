@@ -147,8 +147,7 @@ class BundleCreator(object):
 cmake_minimum_required( VERSION 3.12 FATAL_ERROR )
 """
         )
-        bundle_file.write(
-            """
+        bundle_file.write("""
 ####################################################################
 
 macro( ecbundle_add_project package_name )
@@ -174,8 +173,7 @@ macro( ecbundle_set key value )
        message("  - ${key} = ${${key}} [default=${value}]" )
     endif()
 endmacro()
-"""
-        )
+""")
         cmake_args = OrderedDict()
 
         def ecbundle_set(key, value):
@@ -208,25 +206,16 @@ endmacro()
                         add_cmake_arg(cmake_arg)
 
         if cmake_args:
-            bundle_file.write(
-                """
+            bundle_file.write("""
 ####################################################################
 
-message( "" )"""
-            )
+message( "" )""")
             bundle_version_str = " [" + bundle.version() + "]"
             if bundle.version() == "0.0.0":
                 bundle_version_str = ""
-            bundle_file.write(
-                """
-message( """
-                + '"'
-                + bundle.name()
-                + bundle_version_str
-                + """\" )"""
-            )
-            bundle_file.write(
-                """
+            bundle_file.write("""
+message( """ + '"' + bundle.name() + bundle_version_str + """\" )""")
+            bundle_file.write("""
 message( "  - source     : ${CMAKE_CURRENT_SOURCE_DIR}" )
 message( "  - build      : ${CMAKE_CURRENT_BINARY_DIR}" )
 message( "  - install    : ${CMAKE_INSTALL_PREFIX}"     )
@@ -234,27 +223,20 @@ message( "  - build type : ${CMAKE_BUILD_TYPE}"       )
 message( "" )
 message( "Bundle variables set for this build:" )
 
-"""
-            )
+""")
             for key, value in cmake_args.items():
                 ecbundle_set(key, value)
 
-        bundle_file.write(
-            """message("")
+        bundle_file.write("""message("")
 
 ####################################################################
-"""
-        )
+""")
         if ecbuild_in_bundle:
-            bundle_file.write(
-                """
-find_package( ecbuild 3.0 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR}/ecbuild )"""
-            )
+            bundle_file.write("""
+find_package( ecbuild 3.0 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR}/ecbuild )""")
         else:
-            bundle_file.write(
-                """
-find_package( ecbuild 3.0 QUIET )"""
-            )
+            bundle_file.write("""
+find_package( ecbuild 3.0 QUIET )""")
         if bundle.languages() is None:
             languages = ""
         else:
@@ -287,28 +269,22 @@ include(${CMAKE_CURRENT_BINARY_DIR}/init.cmake OPTIONAL)
                 ):
                     bundle_file.write("ecbundle_add_project( " + args + " )\n")
 
-        bundle_file.write(
-            """
+        bundle_file.write("""
 ## Finalize
 include(${CMAKE_CURRENT_BINARY_DIR}/final.cmake OPTIONAL)
-"""
-        )
+""")
         if ecbuild_in_bundle:
-            bundle_file.write(
-                """
+            bundle_file.write("""
 ecbuild_install_project(NAME ${PROJECT_NAME})
 ecbuild_print_summary()
-"""
-            )
+""")
         else:
-            bundle_file.write(
-                """
+            bundle_file.write("""
 if( ecbuild_FOUND )
   ecbuild_install_project(NAME ${PROJECT_NAME})
   ecbuild_print_summary()
 endif()
-"""
-            )
+""")
 
         bundle_file.close()
 

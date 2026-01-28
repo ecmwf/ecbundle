@@ -99,11 +99,9 @@ def test_build_install(args, here, cleanup, watcher):
         # We create a "final.cmake" file that gets included by the bundle
         # if it exists and add install target inside.
         with open(dir / "final.cmake", "w") as final_file:
-            final_file.write(
-                """
+            final_file.write("""
             install(FILES CMakeLists.txt DESTINATION ".")
-            """
-            )
+            """)
 
     with watcher:
         BundleCreator(**args).create()
