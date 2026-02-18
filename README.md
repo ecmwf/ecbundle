@@ -283,6 +283,49 @@ In following listed variables `<BUNDLE-NAME>` and `<PROJECT-NAME>` are the upper
 This may be useful to use in simple bash scripts without manipulating the yaml file directly.
 
 
+## Additional Utilities
+
+### MARS levtype to GRIB typeOfLevel Mapping
+
+ecbundle includes a utility to query the mapping between MARS levtype/param combinations and their corresponding GRIB typeOfLevel values. This is useful when working with meteorological data from ECMWF's MARS archive.
+
+#### Command-line usage
+
+```bash
+# Get typeOfLevel for a specific levtype
+ecbundle-mars-levels --levtype sfc
+
+# Get typeOfLevel for a specific levtype + param combination
+ecbundle-mars-levels --levtype sfc --param 2t
+
+# List all available levtypes
+ecbundle-mars-levels --list-levtypes
+
+# List all parameter-specific combinations
+ecbundle-mars-levels --list-params
+```
+
+#### Python API usage
+
+```python
+from ecbundle.mars_level_mapping import get_typeoflevel_for_levtype
+
+# Get typeOfLevel for surface data
+type_of_levels = get_typeoflevel_for_levtype('sfc')
+# Returns: ['surface']
+
+# Get typeOfLevel for 2m temperature
+type_of_levels = get_typeoflevel_for_levtype('sfc', '2t')
+# Returns: ['heightAboveGround']
+
+# Get typeOfLevel for pressure level temperature
+type_of_levels = get_typeoflevel_for_levtype('pl', 't')
+# Returns: ['isobaricInhPa']
+```
+
+See `example/mars_levels_example.py` for more examples.
+
+
 Contributing
 ============
 

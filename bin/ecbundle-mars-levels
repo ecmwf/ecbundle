@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+
+# (C) Copyright 2020- ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation nor
+# does it submit to any jurisdiction.
+
+"""
+Command-line utility to query MARS levtype to GRIB typeOfLevel mappings.
+"""
+
+import sys
+import argparse
+from ecbundle.mars_level_mapping import (
+    get_typeoflevel_for_levtype,
+    get_all_levtypes,
+    get_all_param_combinations,
+)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Print possible GRIB typeOfLevel for MARS levtype + param combination',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Get typeOfLevel for surface levtype
+  %(prog)s --levtype sfc
+  
+  # Get typeOfLevel for 2m temperature (surface)
+  %(prog)s --levtype sfc --param 2t
+  
+  # Get typeOfLevel for temperature on pressure levels
+  %(prog)s --levtype pl --param t
+  
+  # List all available levtypes
+  %(prog)s --list-levtypes
+  
+  # List all parameter-specific combinations
+  %(prog)s --list-params
+        """
+    )
+    
+    parser.add_argument(
+        '--levtype',
+        type=str,
+        help='MARS levtype (e.g., sfc, pl, ml, pt, pv, od, wave)'
+    )
+    
+    parser.add_argument(
+        '--param',
+        type=str,
+        help='MARS parameter code (e.g., 2t, t, u, sp) - optional'
+    )
+    
+    parser.add_argument(
+        '--list-levtypes',
+        action='store_true',
+        help='List all available MARS levtype values'
+    )
+    
+    parser.add_argument(
+        '--list-params',
+        action='store_true',
+        help='List all parameter-specific combinations'
+    )
+    
+    args = parser.parse_args()
+    
+    # Handle list commands
+    if args.list_levtypes:
+        print("Available MARS levtype values:")
+        for levtype in get_all_levtypes():
+            type_of_levels = get_typeoflevel_for_levtype(levtype)
+            print(f"  {levtype:6s} -> {', '.join(type_of_levels)}")
+        return 0
+    
+    if args.list_params:
+        print("Parameter-specific combinations:")
+        for levtype, param in get_all_param_combinations():
+            type_of_levels = get_typeoflevel_for_levtype(levtype, param)
+            print(f"  levtype={levtype:4s} param={param:10s} -> {', '.join(type_of_levels)}")
+        return 0
+    
+    # Handle query command
+    if not args.levtype:
+        parser.print_help()
+        print("\nError: --levtype is required unless using --list-levtypes or --list-params")
+        return 1
+    
+    # Query the mapping
+    type_of_levels = get_typeoflevel_for_levtype(args.levtype, args.param)
+    
+    if not type_of_levels:
+        if args.param:
+            print(f"No typeOfLevel mapping found for levtype='{args.levtype}' param='{args.param}'")
+        else:
+            print(f"No typeOfLevel mapping found for levtype='{args.levtype}'")
+        return 1
+    
+    # Print results
+    if args.param:
+        print(f"MARS levtype='{args.levtype}' param='{args.param}'")
+    else:
+        print(f"MARS levtype='{args.levtype}'")
+    
+    print(f"Possible GRIB typeOfLevel values:")
+    for tol in type_of_levels:
+        print(f"  - {tol}")
+    
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
