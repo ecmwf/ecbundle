@@ -61,7 +61,7 @@ class GitURL(object):
 
 
 ECMWF_BITBUCKET_URL = "ssh://git@git.ecmwf.int"
-GITHUB_URL = "https://github.com"
+GITHUB_URL = "git@github.com:"
 
 
 class BundleDownloader(object):
