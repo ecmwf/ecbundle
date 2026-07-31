@@ -101,23 +101,9 @@ def _run_build_and_read_script(args, here, watcher):
 
 
 def test_build_make(args, here, cleanup, watcher):
-    src_dir = here / "source"
     build_dir = here / "build"
-    install_dir = here / "install"
 
-    # Clean directory
-    if src_dir.exists():
-        shutil.rmtree(src_dir)
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    if install_dir.exists():
-        shutil.rmtree(install_dir)
-
-    src_dir.mkdir()
-    shutil.copy(here / "bundle.yml", src_dir / "bundle.yml")
-
-    with watcher:
-        BundleBuilder(**args).build()
+    build_script = _run_build_and_read_script(args, here, watcher)
 
     # Test that build infrastructure scripts are generated
     # TODO: Check their content is fine!
@@ -134,31 +120,15 @@ def test_build_make(args, here, cleanup, watcher):
     assert ("%s/build.sh --without-configure" % build_dir) in watcher.output
 
     # Ensure that we are calling make
-    with (build_dir / "build.sh").open("r") as f:
-        build_script = f.read()
     assert "make -j1" in build_script
 
 
 def test_build_ninja(args, here, cleanup, watcher):
-    src_dir = here / "source"
     build_dir = here / "build"
-    install_dir = here / "install"
 
     args["ninja"] = True
 
-    # Clean directory
-    if src_dir.exists():
-        shutil.rmtree(src_dir)
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    if install_dir.exists():
-        shutil.rmtree(install_dir)
-
-    src_dir.mkdir()
-    shutil.copy(here / "bundle.yml", src_dir / "bundle.yml")
-
-    with watcher:
-        BundleBuilder(**args).build()
+    build_script = _run_build_and_read_script(args, here, watcher)
 
     # Test that build infrastructure scripts are generated
     # TODO: Check their content is fine!
@@ -175,8 +145,6 @@ def test_build_ninja(args, here, cleanup, watcher):
     assert ("%s/build.sh --without-configure" % build_dir) in watcher.output
 
     # Ensure that we are calling make
-    with (build_dir / "build.sh").open("r") as f:
-        build_script = f.read()
     assert "ninja -j1" in build_script
 
 
