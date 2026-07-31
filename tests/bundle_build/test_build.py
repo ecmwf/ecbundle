@@ -74,12 +74,15 @@ def args(here):
     }
 
 
-def test_build_make(args, here, cleanup, watcher):
+def _run_build_and_read_script(args, here, watcher):
+    """
+    Clean, configure and build a fresh test bundle with the given args,
+    then return the generated build.sh script's contents.
+    """
     src_dir = here / "source"
     build_dir = here / "build"
     install_dir = here / "install"
 
-    # Clean directory
     if src_dir.exists():
         shutil.rmtree(src_dir)
     if build_dir.exists():
@@ -92,6 +95,15 @@ def test_build_make(args, here, cleanup, watcher):
 
     with watcher:
         BundleBuilder(**args).build()
+
+    with (build_dir / "build.sh").open("r") as f:
+        return f.read()
+
+
+def test_build_make(args, here, cleanup, watcher):
+    build_dir = here / "build"
+
+    build_script = _run_build_and_read_script(args, here, watcher)
 
     # Test that build infrastructure scripts are generated
     # TODO: Check their content is fine!
@@ -108,31 +120,15 @@ def test_build_make(args, here, cleanup, watcher):
     assert ("%s/build.sh --without-configure" % build_dir) in watcher.output
 
     # Ensure that we are calling make
-    with (build_dir / "build.sh").open("r") as f:
-        build_script = f.read()
     assert "make -j1" in build_script
 
 
 def test_build_ninja(args, here, cleanup, watcher):
-    src_dir = here / "source"
     build_dir = here / "build"
-    install_dir = here / "install"
 
     args["ninja"] = True
 
-    # Clean directory
-    if src_dir.exists():
-        shutil.rmtree(src_dir)
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    if install_dir.exists():
-        shutil.rmtree(install_dir)
-
-    src_dir.mkdir()
-    shutil.copy(here / "bundle.yml", src_dir / "bundle.yml")
-
-    with watcher:
-        BundleBuilder(**args).build()
+    build_script = _run_build_and_read_script(args, here, watcher)
 
     # Test that build infrastructure scripts are generated
     # TODO: Check their content is fine!
@@ -149,9 +145,72 @@ def test_build_ninja(args, here, cleanup, watcher):
     assert ("%s/build.sh --without-configure" % build_dir) in watcher.output
 
     # Ensure that we are calling make
-    with (build_dir / "build.sh").open("r") as f:
-        build_script = f.read()
     assert "ninja -j1" in build_script
+
+
+def test_build_target_leaf_uses_default_makefile(args, here, cleanup, watcher):
+    """Plain target name builds via the default Makefile, not Makefile2."""
+    args["target"] = ["project1"]
+
+    build_script = _run_build_and_read_script(args, here, watcher)
+
+    assert "make -j1 project1" in build_script
+    assert "Makefile2" not in build_script
+
+
+def test_build_target_directory_scope_uses_makefile2_make(args, here, cleanup, watcher):
+    """ "/all" target is built via Makefile2, not the top-level Makefile."""
+    args["target"] = ["project1/all"]
+
+    build_script = _run_build_and_read_script(args, here, watcher)
+
+    assert "make -j1 -f CMakeFiles/Makefile2 project1/all" in build_script
+
+
+def test_build_target_nested_directory_scope_uses_makefile2_make(
+    args, here, cleanup, watcher
+):
+    """Nested "/all" target is routed through Makefile2."""
+    args["target"] = ["project1/subdir1/all"]
+
+    build_script = _run_build_and_read_script(args, here, watcher)
+
+    assert "make -j1 -f CMakeFiles/Makefile2 project1/subdir1/all" in build_script
+
+
+def test_build_target_mixed_leaf_and_directory_scope_make(args, here, cleanup, watcher):
+    """Plain and "/all" targets can be requested together."""
+    args["target"] = ["project1", "project2/all"]
+
+    build_script = _run_build_and_read_script(args, here, watcher)
+
+    assert "make -j1 -f CMakeFiles/Makefile2 project1 project2/all" in build_script
+
+
+@pytest.mark.parametrize(
+    "pseudo_target", ["install/fast", "install/local", "install/strip"]
+)
+def test_build_target_non_all_pseudo_target_not_rerouted_make(
+    args, here, cleanup, watcher, pseudo_target
+):
+    """Pseudo-targets containing "/" but not ending in "/all" aren't rerouted."""
+    args["target"] = [pseudo_target]
+
+    build_script = _run_build_and_read_script(args, here, watcher)
+
+    assert ("make -j1 %s" % pseudo_target) in build_script
+    assert "Makefile2" not in build_script
+
+
+def test_build_target_directory_scope_ninja(args, here, cleanup, watcher):
+    """Ninja resolves "/all" targets directly, with no rerouting needed."""
+    args["ninja"] = True
+    args["target"] = ["project1/all"]
+
+    build_script = _run_build_and_read_script(args, here, watcher)
+
+    assert "ninja -j1 project1/all" in build_script
+    assert "Makefile2" not in build_script
 
 
 def test_build_custom_arch(args, here, cleanup, watcher):
