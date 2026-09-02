@@ -55,5 +55,6 @@ setuptools.setup(
         "bin/ecbundle-version",
         "bin/ecbundle-create",
         "bin/ecbundle-build",
+        "bin/ecbundle-merge",
     ],
 )
