@@ -256,21 +256,44 @@ class Git(object):
 
     @staticmethod
     def remotes(src_dir):
-        command = ["git", "remote", "-v"]
+        # Note: we deliberately read the raw configured URL for each remote
+        # via "git config --get remote.<name>.url" rather than relying on
+        # "git remote -v" / "git remote get-url", which both apply any
+        # configured `url.<base>.insteadOf` credential rewriting. That
+        # rewriting (e.g. injecting a GitHub token) would make the returned
+        # URL differ from the plain URL configured in the bundle, breaking
+        # remote reuse/detection on retries in environments such as CI.
+        command = ["git", "remote"]
         try:
-            remotes = (
+            names = (
                 execute(command, cwd=src_dir, silent=True, capture_output=True)
                 .strip()
                 .split("\n")
             )
-            remotes = [line.split() for line in remotes]
-            return {line[0]: line[1] for line in remotes if line[2] == "(fetch)"}
+            remotes = {}
+            for name in names:
+                name = name.strip()
+                if not name:
+                    continue
+                url_command = ["git", "config", "--get", "remote." + name + ".url"]
+                try:
+                    remotes[name] = execute(
+                        url_command, cwd=src_dir, silent=True, capture_output=True
+                    ).strip()
+                except CalledProcessError:
+                    continue
+            return remotes
         except CalledProcessError:
             raise RuntimeError()
 
     @classmethod
     def is_remote(cls, src_dir, remote, dryrun):
-        command = ["git", "ls-remote", remote]
+        # Detect remote existence by name in the local git configuration
+        # rather than by whether "git ls-remote <remote>" succeeds, since the
+        # latter requires network access (and is subject to credential
+        # rewriting), and would otherwise report a remote as missing simply
+        # because it could not currently be reached.
+        command = ["git", "config", "--get", "remote." + remote + ".url"]
         try:
             execute(command, cwd=src_dir, silent=True, dryrun=dryrun)
             return True
@@ -287,7 +310,11 @@ class Git(object):
 
     @classmethod
     def remote_url(cls, src_dir, origin, dryrun):
-        command = ["git", "remote", "get-url", origin]
+        # Read the raw configured URL directly rather than using
+        # "git remote get-url", which applies "url.<base>.insteadOf"
+        # credential rewriting and would return an authenticated URL that
+        # does not match the plain URL configured in the bundle.
+        command = ["git", "config", "--get", "remote." + origin + ".url"]
         try:
             return execute(
                 command, cwd=src_dir, silent=True, capture_output=True, dryrun=dryrun
