@@ -88,8 +88,16 @@ class MakeBackend:
     def file(self):
         return "Makefile"
 
+    def _needs_directory_recursion_file(self, targets):
+        """Return True if any target is a directory-scoped "/all" target."""
+        return any(str(t).endswith("/all") for t in targets)
+
     def command(self, threads, targets, verbose=False, keep_going=False):
-        command_list = [self.executable(), self.threads(threads), self.targets(targets)]
+        command_list = [self.executable(), self.threads(threads)]
+        if self._needs_directory_recursion_file(targets):
+            # "/all" targets only exist in Makefile2, not the top-level Makefile
+            command_list.append("-f CMakeFiles/Makefile2")
+        command_list.append(self.targets(targets))
         if verbose:
             command_list.append(self.verbose())
         if keep_going:
